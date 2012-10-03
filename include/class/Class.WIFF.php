@@ -1842,33 +1842,33 @@ class WIFF
 	 * @return bool|string the name of a temporary file holding the
 	 *         retrieved data or false in case of error
 	 */
-	public function downloadUrl($url)
+	public function downloadUrl($url, $opts = array())
 	{
 		if (preg_match('/^https?:/i', $url))
 		{
-			return $this->downloadHttpUrl($url);
+			return $this->downloadHttpUrl($url, $opts);
 		} else if (preg_match('/^ftp:/i', $url))
 		{
-			return $this->downloadFtpUrl($url);
+			return $this->downloadFtpUrl($url, $opts);
 		} else
 		{
 			// treat url as a pathname to a local file
-			return $this->downloadLocalFile($url);
+			return $this->downloadLocalFile($url, $opts);
 		}
 		return false;
 	}
 
-	public function downloadHttpUrl($url)
+	public function downloadHttpUrl($url, $opts = array())
 	{
-		return $this->downloadHttpUrlWget($url);
+		return $this->downloadHttpUrlWget($url, $opts);
 	}
 
-	public function downloadFtpUrl($url)
+	public function downloadFtpUrl($url, $opts = array())
 	{
-		return $this->downloadHttpUrlWget($url);
+		return $this->downloadHttpUrlWget($url, $opts);
 	}
 
-	public function downloadLocalFile($url)
+	public function downloadLocalFile($url, $opts = array())
 	{
 		require_once ('lib/Lib.System.php');
 
@@ -1892,7 +1892,7 @@ class WIFF
 	}
 
 
-	public function downloadHttpUrlWget($url)
+	public function downloadHttpUrlWget($url, $opts = array())
 	{
 		include_once ('lib/Lib.System.php');
 
@@ -1947,6 +1947,12 @@ class WIFF
 		{
 			$wget_opts[] = '--proxy-password='.escapeshellarg($proxy_password);
 		}
+		if (isset($opts['timeout'])) {
+			$wget_opts[] = '--timeout='.escapeshellarg($opts['timeout']);
+		}
+		if (isset($opts['tries'])) {
+			$wget_opts[] = '--tries='.escapeshellarg($opts['tries']);
+		}
 		$wget_opts[] = escapeshellarg($url);
 
 		foreach ($envs as $var=>$value)
@@ -1967,7 +1973,7 @@ class WIFF
 		return $tmpfile;
 	}
 
-	public function downloadHttpUrlFopen($url)
+	public function downloadHttpUrlFopen($url, $opts = array())
 	{
 		require_once ('lib/Lib.System.php');
 

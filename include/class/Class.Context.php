@@ -295,7 +295,7 @@ class Context
 		$xpath = new DOMXPath($xml);
 
 		// Check this repository exists
-		$contextRepoList = $xpath->query("/contexts/context[@name='".$this->name."']/repositories/access[@name='".$name."']");
+		$contextRepoList = $xpath->query("/contexts/context[@name='".$this->name."']/repositories/access[@use='".$name."']");
 		if ($contextRepoList->length == 1)
 		{
 			$xpath->query("/contexts/context[@name='".$this->name."']/repositories")->item(0)->removeChild($contextRepoList->item(0));
