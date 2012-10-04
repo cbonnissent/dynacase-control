@@ -194,7 +194,7 @@ class Repository
         require_once ('class/Class.Module.php');
 
         $wiff = WIFF::getInstance();
-        $tmpfile = $wiff->downloadUrl($this->contenturl);
+        $tmpfile = $wiff->downloadUrl($this->contenturl, array('timeout' => 5, 'tries' => 2));
         if ($tmpfile === false)
         {
             //$this->errorMessage = $wiff->errorMessage;

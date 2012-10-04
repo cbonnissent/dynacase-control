@@ -4782,7 +4782,8 @@ function displayInterface() {
 														'path', 'default',
 														'url', 'authenticated',
 														'login', 'password',
-														'displayUrl', 'label'],
+														'displayUrl', 'label',
+														'isValid'],
 												autoLoad : true
 											});
 
@@ -4905,11 +4906,15 @@ function displayInterface() {
 
 											}
 										}],
-										columns : [actions, {
+										columns : [actions,
+												{
 													id : 'name',
 													header : 'Repository',
 													dataIndex : 'name',
-													width : 140
+													width : 140,
+													renderer : function(value, metadata, record, rowIndex, colIndex, store) {
+														return (record.get('isValid')) ? Ext.util.Format.htmlEncode(value) : Ext.util.Format.htmlEncode(value) + '&nbsp;<img src="images/icons/exclamation.png" title="Invalid or unreachable repository" />';
+													}
 												}, {
 													id : 'label',
 													header : 'Label',
