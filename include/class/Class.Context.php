@@ -447,6 +447,70 @@ class Context
 
 	}
 
+	public function getInstalledModuleListWithUpgrade($withAvailableVersion = false)
+	{
+		require_once ('class/Class.WIFF.php');
+		require_once ('class/Class.Module.php');
+
+		$wiff = WIFF::getInstance();
+
+		$xml = new DOMDocument();
+		$xml->load($wiff->contexts_filepath);
+
+		$xpath = new DOMXPath($xml);
+		$installedModuleList = array ();
+		$moduleDom = $xpath->query("/contexts/context[@name='".$this->name."']/modules/module");
+		foreach ($moduleDom as $module) {
+			$mod = new Module($this, null, $module, true);
+			if ($mod->status == 'installed') {
+				$installedModuleList[] = $mod;
+			}
+		}
+
+		//Process for with available version option
+		if ($withAvailableVersion) {
+			$availableModuleList = $this->getAvailableModuleList();
+
+			/**
+			 * @var Module $availableModule
+			 */
+			foreach ($availableModuleList as $availableModule) {
+				/**
+				 * @var Module $module
+				 */
+				foreach ($installedModuleList as $module) {
+					if ($availableModule->name == $module->name) {
+						$module->availableversion = $availableModule->version;
+						$module->availableversionrelease = $availableModule->version.'-'.$availableModule->release;
+						$cmp = $this->cmpModuleByVersionReleaseAsc($module, $availableModule);
+						if ($cmp < 0) {
+							$module->canUpdate = true;
+							$module->updateName = $availableModule->name;
+							$module->parseXmlChangelogNode($availableModule->xmlNode);
+						}
+					} else {
+						/* Search for available modules that replaces the installed module */
+						$replaceList = $availableModule->getReplacesModules();
+						$replacement = '';
+						foreach ($replaceList as $replace) {
+							if ($module->name == $replace['name']) {
+								$replacement = $replace['name'];
+							}
+						}
+						if ($replacement != '') {
+							$module->canUpdate = true;
+							$module->updateName = $availableModule->name;
+							$module->availableversion = $availableModule->version;
+							$module->availableversionrelease = $availableModule->version.'-'.$availableModule->release;
+						}
+					}
+				}
+			}
+		}
+
+		return $installedModuleList;
+	}
+
 	/**
 	 * Get the list of available module Objects in the repositories of the context
 	 * @param boolean onlyNotInstalled only return available and not installed modules
@@ -474,7 +538,7 @@ class Context
 		// Process for only not installed option
 		if ($onlyNotInstalled)
 		{
-			$installedModuleList = $this->getInstalledModuleList();
+			$installedModuleList = $this->getInstalledModuleListWithUpgrade(true);
 
 			foreach ($installedModuleList as $installedModule)
 			{
@@ -482,6 +546,9 @@ class Context
 				{
 					if ($installedModule->name == $module->name)
 					{
+						unset ($moduleList[$moduleKey]);
+						$moduleList = array_values($moduleList);
+					} elseif ($installedModule->updateName != '' && $installedModule->updateName == $module->name) {
 						unset ($moduleList[$moduleKey]);
 						$moduleList = array_values($moduleList);
 					}
@@ -892,53 +959,9 @@ class Context
 			$i++;
 		}
 
-		function listContains($list, $name)
-		{
-			foreach ($list as $module)
-			{
-				if ($module->name == $name)
-				{
-					return true;
-				}
-			}
-			return false;
-		}
-
-		function recursiveOrdering( & $list, & $orderList)
-		{
-			foreach ($list as $key=>$mod)
-			{
-				$reqList = $mod->getRequiredModules();
-
-				$pushable = true;
-
-				foreach ($reqList as $req)
-				{
-					// If ordered list does not contain one dependency and dependency list does contain it, module must not be added to ordered list at that time
-					if (!listContains($orderList, $req['name']) && listContains($list, $req['name']))
-					{
-						$pushable = false;
-					}
-				}
-
-				if ($pushable)
-				{
-					array_push($orderList, $mod);
-					unset ($list[$key]);
-				}
-
-			}
-
-			if (count($list) != 0)
-			{
-				recursiveOrdering($list, $orderList);
-			}
-
-		}
-
 		$orderList = array ();
 
-		recursiveOrdering($depsList, $orderList);
+		$this->recursiveOrdering($depsList, $orderList);
 
 		// Put toolbox always at the beginning of the list
 		foreach($orderList as $key=>$value){
@@ -969,13 +992,48 @@ class Context
 		unset($mod);
 
 		foreach( $removeList as $mod ) {
-			if( ! listContains($orderList, $mod->name) ) {
+			if( ! $this->listContains($orderList, $mod->name) ) {
 				$mod->needphase = 'replaced';
 				array_unshift($orderList, $mod);
 			}
 		}
 
 		return $orderList;
+	}
+
+	function listContains($list, $name)
+	{
+		foreach ($list as $module) {
+			if ($module->name == $name) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	function recursiveOrdering( & $list, & $orderList)
+	{
+		foreach ($list as $key=>$mod) {
+			$reqList = $mod->getRequiredModules();
+
+			$pushable = true;
+
+			foreach ($reqList as $req) {
+				// If ordered list does not contain one dependency and dependency list does contain it, module must not be added to ordered list at that time
+				if (!$this->listContains($orderList, $req['name']) && $this->listContains($list, $req['name'])) {
+					$pushable = false;
+				}
+			}
+
+			if ($pushable) {
+				array_push($orderList, $mod);
+				unset ($list[$key]);
+			}
+		}
+
+		if (count($list) != 0) {
+			$this->recursiveOrdering($list, $orderList);
+		}
 	}
 
 	/**

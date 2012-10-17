@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<contexts>
+    <context name="ctx1" description="Context One" root="ctx1">
+
+        <repositories>
+            <access name="test" description="test" baseurl="repo/"/>
+        </repositories>
+
+        <modules>
+            <module name="dynacase-platform" version="3.2.1" release="0" status="installed" />
+        </modules>
+
+    </context>
+</contexts>

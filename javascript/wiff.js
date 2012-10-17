@@ -2505,7 +2505,7 @@ function updateContextList_success(responseObject, select) {
 										url : 'wiff.php',
 										baseParams : {
 											context : this.ownerCt.id,
-											getInstalledModuleList : true,
+											getInstalledModuleListWithUpgrade : true,
 											authInfo : Ext.encode(authInfo)
 										},
 										root : 'data',
@@ -2515,7 +2515,8 @@ function updateContextList_success(responseObject, select) {
 												'errorstatus', {
 													name : 'canUpdate',
 													type : 'boolean'
-												}, {
+												},
+												'updateName', {
 													name : 'hasDisplayableParameter',
 													type : 'boolean'
 												}, 'changelog'],
@@ -2556,8 +2557,12 @@ function updateContextList_success(responseObject, select) {
 												.getSelections();
 										var modules = [];
 										for (var i = 0; i < selections.length; i++) {
-											modules.push(selections[i]
-													.get('name'));
+											var sel = selections[i];
+											if (sel.get('updateName') != undefined && sel.get('updateName') != '') {
+												modules.push(sel.get('updateName'));
+											} else {
+												modules.push(sel.get('name'));
+											}
 										}
 										if (modules.length != 0) {
 											upgrade(modules);
@@ -2883,17 +2888,45 @@ function upgrade_success(responseObject) {
 	toDownload = data;
 	toInstall = data.slice();
 
-	htmlModuleList = '<ul>';
+	removeList = new Array();
+	upgradeList = new Array();
+
 	for (var i = 0; i < toDownload.length; i++) {
-		htmlModuleList = htmlModuleList + '<li><b>' + toDownload[i].name
-				+ '</b> <i>(' + toDownload[i].versionrelease + ')</i> </li>';
+		if (toDownload[i].needphase == 'replaced') {
+			removeList.push(toDownload[i]);
+		} else {
+			upgradeList.push(toDownload[i]);
+		}
 	}
-	htmlModuleList = htmlModuleList + '</ul>';
+
+	htmlModuleList = '';
+	if (removeList.length > 0) {
+		htmlModuleList = htmlModuleList
+			+ 'Installer will remove the following module(s):<br/><br/>';
+		htmlModuleList = htmlModuleList + '<ul>';
+		for (var i = 0; i < removeList.length; i++) {
+			htmlModuleList = htmlModuleList + '<li><b>' + removeList[i].name
+				+ '</b> <i>(' + removeList[i].versionrelease + ')</i></li>';
+		}
+		htmlModuleList = htmlModuleList + '</ul>';
+		htmlModuleList = htmlModuleList + '<br/><br/>';
+	}
+	if (upgradeList.length > 0) {
+		htmlModuleList = htmlModuleList
+			+ 'Installer will upgrade the following module(s):<br/><br/>';
+		htmlModuleList = htmlModuleList + '<ul>';
+		for (var i = 0; i < upgradeList.length; i++) {
+			htmlModuleList = htmlModuleList + '<li><b>' + upgradeList[i].name
+				+ '</b> <i>(' + upgradeList[i].versionrelease
+				+ ')</i></li>';
+		}
+		htmlModuleList = htmlModuleList + '</ul>';
+		htmlModuleList = htmlModuleList + '<br/><br/>';
+	}
 
 	Ext.Msg.show({
 				title : 'Dynacase Control',
-				msg : 'Installer will install following module(s) : <br/>'
-						+ htmlModuleList,
+				msg : htmlModuleList,
 				buttons : {
 					ok : true,
 					cancel : true

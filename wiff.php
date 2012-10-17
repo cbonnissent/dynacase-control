@@ -741,11 +741,11 @@ if ( isset ($_REQUEST['context']) && isset ($_REQUEST['deactivateRepo']) && isse
 }
 
 // Request to get a context installed module list
-if ( isset ($_REQUEST['context']) && isset ($_REQUEST['getInstalledModuleList']))
+if ( isset ($_REQUEST['context']) && isset ($_REQUEST['getInstalledModuleListWithUpgrade']))
 {
 	if (!$wiff->errorMessage)
 	{
-		$moduleList = $context->getInstalledModuleList(true);
+		$moduleList = $context->getInstalledModuleListWithUpgrade(true);
 		if ($context->errorMessage)
 		{
 			answer($moduleList, $context->errorMessage);
