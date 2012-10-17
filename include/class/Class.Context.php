@@ -1996,10 +1996,25 @@ class Context
 		$purgeNodeList = array();
 		for( $i = 0; $i < $parametersValueNodeList->length; $i++ ) {
 			$pv = $parametersValueNodeList->item($i);
-			$moduleName = $pv->getAttribute('modulename');
-			$module = $this->getModule($moduleName);
-			if( $module === false || $pv->getAttribute('volatile') == 'yes' ) {
+			if ($pv->getAttribute('volatile') == 'yes') {
+				/* Purge volatile parameters */
 				array_push($purgeNodeList, $pv);
+			} else {
+				$moduleName = $pv->getAttribute('modulename');
+				$module = $this->getModule($moduleName);
+				if ($module === false) {
+					/* If the parameter's module does not exists, then try to find an
+					 * installed module which replaces this missing parameter's module.
+					 */
+					$newModule = $this->getModuleReplaced($moduleName);
+					if ($newModule === false) {
+						/* Purge the parameter as it belongs to nobody */
+						array_push($purgeNodeList, $pv);
+					} else {
+						/* Re-affect the parameter to this new module */
+						$pv->setAttribute('modulename', $newModule->name);
+					}
+				}
 			}
 		}
 
