@@ -982,6 +982,7 @@ class Context
 				$replacedModule = $this->getModuleInstalled($replace['name']);
 				if( $replacedModule !== false ) {
 					// This module is installed, so mark it for removal
+					$replacedModule->replacedBy = $mod->name;
 					array_push($removeList, $replacedModule);
 					// and mark the main module for 'upgrade'
 					$mod->needphase = 'upgrade';

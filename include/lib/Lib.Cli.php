@@ -436,7 +436,7 @@ function wiff_context_module_install_local(&$context, &$options, &$pkgName, &$ar
 	}
 
 	if( count($depList) > 1 ) {
-		echo sprintf("Will (i)nstall, (u)pgrade or (r)eplace the following packages:\n");
+		echo sprintf("Will (i)nstall, (u)pgrade or (r)eplace the following modules:\n");
 		foreach( $depList as $module ) {
 			if( $module->needphase == '' ) {
 				$module->needphase = 'install';
@@ -477,7 +477,7 @@ function wiff_context_module_install_remote(&$context, &$options, &$modName, &$a
 	}
 
 	if( count($depList) > 1 ) {
-		echo sprintf("Will (i)nstall, (u)pgrade, or (r)eplace the following packages:\n");
+		echo sprintf("Will (i)nstall, (u)pgrade, or (r)eplace the following modules:\n");
 		foreach( $depList as $module ) {
 			if( $module->needphase == '' ) {
 				$module->needphase = 'install';
@@ -844,7 +844,7 @@ function wiff_context_module_upgrade_local(&$context, &$options, &$pkgName, &$ar
 	}
 
 	if( count($depList) > 1 ) {
-		echo sprintf("Will (i)nstall, (u)pgrade or (r)eplace the following packages:\n");
+		echo sprintf("Will (i)nstall, (u)pgrade or (r)eplace the following modules:\n");
 		foreach( $depList as $module ) {
 			if( $module->needphase == '' ) {
 				$module->needphase = 'upgrade';
@@ -895,7 +895,7 @@ function wiff_context_module_upgrade_remote(&$context, &$options, &$modName, &$a
 	}
 
 	if( count($depList) > 1 ) {
-		echo sprintf("Will (i)nstall, (u)pgrade or (r)eplace the following packages:\n");
+		echo sprintf("Will (i)nstall, (u)pgrade or (r)eplace the following modules:\n");
 		foreach( $depList as $module ) {
 			if( $module->needphase == '' ) {
 				$module->needphase = 'upgrade';
