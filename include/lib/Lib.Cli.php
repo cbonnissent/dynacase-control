@@ -436,7 +436,7 @@ function wiff_context_module_install_local(&$context, &$options, &$pkgName, &$ar
 	}
 
 	if( count($depList) > 1 ) {
-		echo sprintf("Will (i)nstall, (u)pgrade or (r)eplace the following packages:\n");
+		echo sprintf("Will (i)nstall, (u)pgrade or (r)eplace the following modules:\n");
 		foreach( $depList as $module ) {
 			if( $module->needphase == '' ) {
 				$module->needphase = 'install';
@@ -477,7 +477,7 @@ function wiff_context_module_install_remote(&$context, &$options, &$modName, &$a
 	}
 
 	if( count($depList) > 1 ) {
-		echo sprintf("Will (i)nstall, (u)pgrade, or (r)eplace the following packages:\n");
+		echo sprintf("Will (i)nstall, (u)pgrade, or (r)eplace the following modules:\n");
 		foreach( $depList as $module ) {
 			if( $module->needphase == '' ) {
 				$module->needphase = 'install';
@@ -844,7 +844,7 @@ function wiff_context_module_upgrade_local(&$context, &$options, &$pkgName, &$ar
 	}
 
 	if( count($depList) > 1 ) {
-		echo sprintf("Will (i)nstall, (u)pgrade or (r)eplace the following packages:\n");
+		echo sprintf("Will (i)nstall, (u)pgrade or (r)eplace the following modules:\n");
 		foreach( $depList as $module ) {
 			if( $module->needphase == '' ) {
 				$module->needphase = 'upgrade';
@@ -895,7 +895,7 @@ function wiff_context_module_upgrade_remote(&$context, &$options, &$modName, &$a
 	}
 
 	if( count($depList) > 1 ) {
-		echo sprintf("Will (i)nstall, (u)pgrade or (r)eplace the following packages:\n");
+		echo sprintf("Will (i)nstall, (u)pgrade or (r)eplace the following modules:\n");
 		foreach( $depList as $module ) {
 			if( $module->needphase == '' ) {
 				$module->needphase = 'upgrade';
@@ -963,7 +963,7 @@ function wiff_context_module_list_help(&$context, &$argv) {
 function wiff_context_module_list_upgrade(&$context, &$argv) {
 	$options = parse_argv_options($argv);
 
-	$installedList = $context->getInstalledModuleList();
+	$installedList = $context->getInstalledModuleListWithUpgrade(true);
 	if( $installedList === false ) {
 		error_log(sprintf("Error: could not get list of installed modules: %s", $context->errorMessage));
 		return 1;
@@ -979,18 +979,14 @@ function wiff_context_module_list_upgrade(&$context, &$argv) {
 		echo sprintf("%-32s---%-16s---%-16s\n", str_repeat('-', 32), str_repeat('-', 16), str_repeat('-', 16));
 	}
 	foreach( $installedList as $module ) {
-		$availMod = $context->getModuleAvail($module->name);
-		if( $availMod === false ) {
+		if (!$module->canUpdate) {
 			continue;
+		}
+		$updateName = (isset($module->updateName) && $module->updateName != '') ? $module->updateName : $module->name;
+		if (boolopt('pretty', $options)) {
+			echo sprintf("%-32s   %-16s   %-16s\n", $updateName, sprintf("%s-%s", $module->version, $module->release), $module->availableversionrelease);
 		} else {
-			$cmp = $context->cmpVersionReleaseAsc($module->version, $module->release, $availMod->version, $availMod->release);
-			if( $cmp < 0 ) {
-				if( boolopt('pretty', $options) ) {
-					echo sprintf("%-32s   %-16s   %-16s\n", $module->name, sprintf("%s-%s", $module->version, $module->release), sprintf("%s-%s", $availMod->version, $availMod->release));
-				} else {
-					echo sprintf("%s (%s-%s)\n", $module->name, $availMod->version, $availMod->release);
-				}
-			}
+			echo sprintf("%s (%s)\n", $updateName, $module->availableversionrelease);
 		}
 	}
 
