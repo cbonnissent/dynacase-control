@@ -965,11 +965,9 @@ class Context
 
 		// Put toolbox always at the beginning of the list
 		foreach($orderList as $key=>$value){
-			if(($value->name == 'dynacase-platform')  || ($value->name == 'freedom-toolbox')){
-
+			if($value->name == 'dynacase-core' || $value->name == 'dynacase-platform' || $value->name == 'freedom-toolbox'){
 				unset($orderList[$key]);
 				array_unshift($orderList,$value);
-
 			}
 		}
 
