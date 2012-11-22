@@ -18,6 +18,8 @@ ini_set('max_execution_time', 3600);
 
 putenv('WIFF_ROOT='.getcwd());
 
+require_once ('lib/Lib.System.php');
+
 checkInitServer();
 
 require_once ('class/Class.WIFF.php');
@@ -53,80 +55,81 @@ if (get_magic_quotes_gpc())
  */
 function checkInitServer()
 {
-	$errors = array ();
+	$errors = array();
 
 	// Check for required classes
-	foreach ( array (
-			 'DOMDocument',
-			 'ZipArchive'
-			 ) as $class)
-			 {
-			 	if (!class_exists($class, false))
-			 	{
-			 		array_push($errors, sprintf("PHP class '%s' not found.", $class));
-			 	}
-			 }
+	foreach (array(
+				 'DOMDocument',
+			 ) as $class) {
+		if (!class_exists($class, false)) {
+			array_push($errors, sprintf("PHP class '%s' not found.", $class));
+		}
+	}
 
-			 // Check for required functions
-			 foreach ( array (
-			 'json_encode' => 'json',
-			 'json_decode' => 'json',
-			 'xml_parse' => 'xml',
-			 'zip_open' => 'zip',
-			 'date' => 'date',
-			 'preg_match' => 'pcre',
-			 'pg_connect' => 'pgsql',
-			 'curl_init' => 'curl'
-			 ) as $function => $extension )
-			 {
-			 	if (!function_exists($function))
-			 	{
-			 		array_push($errors, sprintf("PHP function '%s' not found (extension '%s').", $function, $extension));
-			 	}
-			 }
+	// Check for required functions
+	foreach (array(
+				 'json_encode' => 'json',
+				 'json_decode' => 'json',
+				 'xml_parse' => 'xml',
+				 'date' => 'date',
+				 'preg_match' => 'pcre',
+				 'pg_connect' => 'pgsql',
+				 'curl_init' => 'curl'
+			 ) as $function => $extension) {
+		if (!function_exists($function)) {
+			array_push($errors, sprintf("PHP function '%s' not found (extension '%s').", $function, $extension));
+		}
+	}
 
-			 // Initialize xml conf files
-			 foreach ( array (
-        'conf/params.xml',
-        'conf/contexts.xml'
-        ) as $file)
-        {
-        	if (is_file($file))
-        	{
-        		continue ;
-        	}
-        	if (!is_file(sprintf("%s.template", $file)))
-        	{
-        		array_push($errors, sprintf("Could not find '%s.template' file.", $file, $file));
-        		continue ;
-        	}
-        	$fout = fopen($file, 'x');
-        	if ($fout === false)
-        	{
-        		array_push($errors, sprintf("Could not create '%s' file.", $file));
-        		continue ;
-        	}
-        	$content = @file_get_contents(sprintf("%s.template", $file));
-        	if ($content === false)
-        	{
-        		array_push($errors, sprintf("Error reading content of '%s.template'.", $file));
-        		continue ;
-        	}
-        	$ret = fwrite($fout, $content);
-        	if ($ret === false)
-        	{
-        		array_push($errors, sprintf("Error writing content to '%s'.", $file));
-        		continue ;
-        	}
-        	fclose($fout);
-        }
+	// Check for required system commands
+	foreach (array(
+				'zip',
+				'unzip',
+				'pg_dump',
+				'tar',
+				'gzip'
+			 ) as $cmd) {
+		$cmdPath = WiffLibSystem::getCommandPath($cmd);
+		if ($cmdPath === false) {
+			array_push($errors, sprintf("System command '%s' not found in PATH.", $cmd));
+		}
+	}
 
-        if (count($errors) > 0)
-        {
-        	$msg = join('\n', $errors);
-        	echo sprintf('alert("%s")', $msg);
-        	exit (1);
-        }
+	// Initialize xml conf files
+	foreach (array(
+				 'conf/params.xml',
+				 'conf/contexts.xml'
+			 ) as $file) {
+		if (is_file($file)) {
+			continue;
+		}
+		if (!is_file(sprintf("%s.template", $file))) {
+			array_push($errors, sprintf("Could not find '%s.template' file.", $file, $file));
+			continue;
+		}
+		$fout = fopen($file, 'x');
+		if ($fout === false) {
+			array_push($errors, sprintf("Could not create '%s' file.", $file));
+			continue;
+		}
+		$content = @file_get_contents(sprintf("%s.template", $file));
+		if ($content === false) {
+			array_push($errors, sprintf("Error reading content of '%s.template'.", $file));
+			continue;
+		}
+		$ret = fwrite($fout, $content);
+		if ($ret === false) {
+			array_push($errors, sprintf("Error writing content to '%s'.", $file));
+			continue;
+		}
+		fclose($fout);
+	}
+
+	if (count($errors) > 0) {
+		$msg = join('\n', $errors);
+		echo sprintf('alert("%s")', $msg);
+		exit (1);
+	}
 }
 
 /**
