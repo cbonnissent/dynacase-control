@@ -987,15 +987,38 @@ class Context
 				}
 			}
 		}
-
 		unset($mod);
 
-		foreach( $removeList as $mod ) {
+		foreach( $removeList as &$mod ) {
 			if( ! $this->listContains($orderList, $mod->name) ) {
 				$mod->needphase = 'replaced';
-				array_unshift($orderList, $mod);
+				/*
+				 * Try to insert the replaced module just before the
+				 * newly installed module.
+				 */
+				if (isset($mod->replacedBy)) {
+					/*
+					 * Lookup insertion position from the end of the list.
+					 *
+					 * If no insertion position is found, then the
+					 * module will be inserted at the front of the list
+					 * (position = 0).
+					 */
+					$pos = count($orderList) - 1;
+					while ($pos > 0) {
+						if ($mod->replacedBy == $orderList[$pos]->name) {
+							break;
+						}
+						$pos--;
+					}
+					/*
+					 * Insert the module at found position.
+					 */
+					array_splice($orderList, $pos, 0, array($mod));
+				}
 			}
 		}
+		unset($mod);
 
 		return $orderList;
 	}
