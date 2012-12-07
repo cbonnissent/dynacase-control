@@ -994,7 +994,7 @@ class Context
 					array_push($removeList, $replacedModule);
 					// and mark the main module for 'upgrade'
 					$mod->needphase = 'upgrade';
-                    $mod->errorMessage = "Warning: replace ".$replacedModule->name.", version is not checked";
+                    $mod->errorMessage = "Warning: replace ".$replacedModule->name.", versions are not checked";
 				}
 			}
 		}

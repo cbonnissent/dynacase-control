@@ -2875,61 +2875,7 @@ function upgrade(modulelist) {
 };
 
 function upgrade_success(responseObject) {
-
-	mask.hide();
-
-	var response = eval('(' + responseObject.responseText + ')');
-	if (response.error) {
-		Ext.Msg.alert('Server Error', response.error);
-        return;
-	}
-
-	var data = response.data;
-
-	toDownload = data;
-	toInstall = data.slice();
-
-	var htmlModuleList = 'Installer will (i)nstall, (u)pgrade, or (r)eplace the following modules:<br/><br/>';
-	htmlModuleList += '<ul>';
-	for (var i = 0; i < toDownload.length; i++) {
-		var op = '<span style="color: #990; font-family: monospace">u</span>';
-		var comment = toDownload[i].versionrelease;
-		if (toDownload[i].needphase == 'replaced') {
-			op = '<span style="color: #900; font-family: monospace">r</span>';
-			comment = '(replaced by ' + ((toDownload[i].replacedBy) ? toDownload[i].replacedBy : 'unknown') + ')';
-		} else if (toDownload[i].needphase == 'install') {
-			op = '<span style="color: #090; font-family: monospace">i</span>';
-		}
-        var error = "";
-        if (toDownload[i].errorMessage) {
-            error = '<i style="color: #900;">&nbsp;('+toDownload[i].errorMessage+')</i>';
-        }
-        htmlModuleList += '<li><i>(' + op + ')</i>&nbsp;<b>' + toDownload[i].name + '</b>&nbsp;<i>' + comment + '</i>'+error+'</li>';
-    }
-	htmlModuleList += '</ul><br/><br/>';
-
-	Ext.Msg.show({
-				title : 'Dynacase Control',
-				msg : htmlModuleList,
-				buttons : {
-					ok : true,
-					cancel : true
-				},
-				fn : function(btn) {
-					switch (btn) {
-						case 'ok' :
-							if (toDownload.length > 0) {
-								// for (var i = 0; i < toDownload.length; i++) {
-								download(toDownload[0], 'upgrade');
-								// }
-							}
-							break;
-						case 'cancel' :
-							// Do nothing. Will simply close message window.
-							break;
-					}
-				}
-			});
+    show_and_download_dependencies('upgrade', responseObject);
 }
 
 function upgrade_failure(module, reponseObject) {
@@ -3030,6 +2976,63 @@ function installLocal(file) {
 			});
 }
 
+function show_and_download_dependencies(action, responseObject) {
+    mask.hide();
+
+    var response = eval('(' + responseObject.responseText + ')');
+    if (response.error) {
+        Ext.Msg.alert('Server Error', response.error);
+        return;
+    }
+
+    var data = response.data;
+
+    toDownload = data;
+    toInstall = data.slice();
+
+    var htmlModuleList = 'Installer will (i)nstall, (u)pgrade, or (r)eplace the following modules:<br/><br/>';
+    htmlModuleList += '<ul>';
+    for (var i = 0; i < toDownload.length; i++) {
+        var op = '<span style="color: #090; font-family: monospace">i</span>';
+        var comment = toDownload[i].versionrelease;
+        if (toDownload[i].needphase == 'replaced') {
+            op = '<span style="color: #900; font-family: monospace">r</span>';
+            comment = '(replaced by ' + ((toDownload[i].replacedBy) ? toDownload[i].replacedBy : 'unknown') + ')';
+        } else if (toDownload[i].needphase == 'upgrade') {
+            op = '<span style="color: #990; font-family: monospace">u</span>';
+        }
+        var error = "";
+        if (toDownload[i].errorMessage) {
+            error = '<span class="message error">&nbsp('+toDownload[i].errorMessage+')</span>';
+        }
+        htmlModuleList += '<li><i>(' + op + ')</i>&nbsp;<span class="module">' + toDownload[i].name + '</span>&nbsp;<span class="message">' + comment + '</span>'+error+'</li>';
+    }
+    htmlModuleList += '</ul><br/><br/>';
+
+    Ext.Msg.show({
+        title : 'Dynacase Control',
+        msg : htmlModuleList,
+        buttons : {
+            ok : true,
+            cancel : true
+        },
+        fn : function(btn) {
+            switch (btn) {
+                case 'ok' :
+                    if (toDownload.length > 0) {
+                        // for (var i = 0; i < toDownload.length; i++) {
+                        download(toDownload[0], action);
+                        // }
+                    }
+                    break;
+                case 'cancel' :
+                    // Do nothing. Will simply close message window.
+                    break;
+            }
+        }
+    });
+}
+
 /**
  * install a module
  */
@@ -3058,62 +3061,7 @@ function install(modulelist) {
 }
 
 function install_success(responseObject) {
-
-	mask.hide();
-
-	var response = eval('(' + responseObject.responseText + ')');
-	if (response.error) {
-		Ext.Msg.alert('Server Error', response.error);
-		return;
-	}
-
-	var data = response.data;
-
-	toDownload = data;
-	toInstall = data.slice();
-
-	var htmlModuleList = 'Installer will (i)nstall, (u)pgrade, or (r)eplace the following modules:<br/><br/>';
-	htmlModuleList += '<ul>';
-	for (var i = 0; i < toDownload.length; i++) {
-		var op = '<span style="color: #090; font-family: monospace">i</span>';
-		var comment = toDownload[i].versionrelease;
-		if (toDownload[i].needphase == 'replaced') {
-			op = '<span style="color: #900; font-family: monospace">r</span>';
-			comment = '(replaced by ' + ((toDownload[i].replacedBy) ? toDownload[i].replacedBy : 'unknown') + ')';
-		} else if (toDownload[i].needphase == 'upgrade') {
-			op = '<span style="color: #990; font-family: monospace">u</span>';
-		}
-        var error = "";
-        if (toDownload[i].errorMessage) {
-            error = '<i style="color: #900;">&nbsp('+toDownload[i].errorMessage+')</i>';
-        }
-		htmlModuleList += '<li><i>(' + op + ')</i>&nbsp;<b>' + toDownload[i].name + '</b>&nbsp;<i>' + comment + '</i>'+error+'</li>';
-	}
-	htmlModuleList += '</ul><br/><br/>';
-
-	Ext.Msg.show({
-				title : 'Dynacase Control',
-				msg : htmlModuleList,
-				buttons : {
-					ok : true,
-					cancel : true
-				},
-				fn : function(btn) {
-					switch (btn) {
-						case 'ok' :
-							if (toDownload.length > 0) {
-								// for (var i = 0; i < toDownload.length; i++) {
-								download(toDownload[0], 'install');
-								// }
-							}
-							break;
-						case 'cancel' :
-							// Do nothing. Will simply close message window.
-							break;
-					}
-				}
-			});
-
+    show_and_download_dependencies('install', responseObject);
 }
 
 function install_failure(responseObject) {
