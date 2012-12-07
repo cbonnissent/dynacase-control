@@ -1030,7 +1030,11 @@ class Context
 		}
 
         if ($count === count($list)) {
-            $this->errorMessage = sprintf("Too many recursive dependency, check your required module list");
+            $modulesList = "";
+            foreach ($list as $mod) {
+                $modulesList .= ($modulesList ? ",\n" : ""). $mod->name;
+            }
+            $this->errorMessage = sprintf("These modules requirement are in conflict: \n".$modulesList);
             return false;
         }
 		if (count($list) != 0) {
