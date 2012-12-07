@@ -2881,6 +2881,7 @@ function upgrade_success(responseObject) {
 	var response = eval('(' + responseObject.responseText + ')');
 	if (response.error) {
 		Ext.Msg.alert('Server Error', response.error);
+        return;
 	}
 
 	var data = response.data;
@@ -2899,8 +2900,12 @@ function upgrade_success(responseObject) {
 		} else if (toDownload[i].needphase == 'install') {
 			op = '<span style="color: #090; font-family: monospace">i</span>';
 		}
-		htmlModuleList += '<li><i>(' + op + ')</i>&nbsp;<b>' + toDownload[i].name + '</b>&nbsp;<i>' + comment + '</i></i></li>';
-	}
+        var error = "";
+        if (toDownload[i].errorMessage) {
+            error = '<i style="color: #900;">&nbsp;('+toDownload[i].errorMessage+')</i>';
+        }
+        htmlModuleList += '<li><i>(' + op + ')</i>&nbsp;<b>' + toDownload[i].name + '</b>&nbsp;<i>' + comment + '</i>'+error+'</li>';
+    }
 	htmlModuleList += '</ul><br/><br/>';
 
 	Ext.Msg.show({
@@ -3078,7 +3083,11 @@ function install_success(responseObject) {
 		} else if (toDownload[i].needphase == 'upgrade') {
 			op = '<span style="color: #990; font-family: monospace">u</span>';
 		}
-		htmlModuleList += '<li><i>(' + op + ')</i>&nbsp;<b>' + toDownload[i].name + '</b>&nbsp;<i>' + comment + '</i></i></li>';
+        var error = "";
+        if (toDownload[i].errorMessage) {
+            error = '<i style="color: #900;">&nbsp('+toDownload[i].errorMessage+')</i>';
+        }
+		htmlModuleList += '<li><i>(' + op + ')</i>&nbsp;<b>' + toDownload[i].name + '</b>&nbsp;<i>' + comment + '</i>'+error+'</li>';
 	}
 	htmlModuleList += '</ul><br/><br/>';
 
