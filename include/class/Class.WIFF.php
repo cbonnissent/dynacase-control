@@ -252,55 +252,14 @@ class WIFF
 	}
 
 	/**
-	 * Compare WIFF versions
+	 * Compare WIFF versions using PHP's version_compare()
 	 * @return int|string
 	 * @param string $v1
-	 * @param string $r1
 	 * @param string $v2
-	 * @param string $r2
 	 */
-	private function compareVersion($v1, $r1, $v2, $r2)
+	private function compareVersion($v1, $v2)
 	{
-		$ver1 = preg_split('/\./', $v1, 3);
-		$rel1 = $r1;
-		$ver2 = preg_split('/\./', $v2, 3);
-		$rel2 = $r2;
-
-		$str1 = sprintf("%03d%03d%03d", $ver1[0], $ver1[1], $ver1[2]);
-		$str2 = sprintf("%03d%03d%03d", $ver2[0], $ver2[1], $ver2[2]);
-
-		$cmp_ver = strcmp($str1, $str2);
-
-		/* Version is different, so we do not
-		 * need to test the release
-		 */
-		if( $cmp_ver != 0 ) {
-			return $cmp_ver;
-		}
-
-		/* Version is equal, so we need to
-		 * test the release:
-		 *   num vs. num => numeric comparison
-		 *   str vs. str => string comparison
-		 *   num vs. str => string is < to num
-		 */
-		if( is_numeric($rel1) && is_numeric($rel2) ) {
-			/* standard numeric comparison */
-			$cmp_rel = $rel1-$rel2;
-		} else if( is_numeric($rel1) && is_string($rel2) ) {
-			/* number is > to string */
-			$cmp_rel = 1;
-		} else if( is_string($rel1) && is_numeric($rel2) ) {
-			/* string is < to number */
-			$cmp_rel = -1;
-		} else if( is_string($rel1) && is_string($rel2) ) {
-			/* standard string comparison */
-			$cmp_rel = strcmp($rel1, $rel2);
-		} else {
-			$cmp_rel = 0;
-		}
-
-		return $cmp_rel;
+		return version_compare($v1, $v2);
 	}
 
 	/**
@@ -310,16 +269,8 @@ class WIFF
 	public function needUpdate()
 	{
 		$vr = $this->getVersion();
-		$svr = preg_split('/\-/', $vr, 2);
-		$v1 = $svr[0];
-		$r1 = $svr[1];
-
 		$avr = $this->getAvailVersion();
-		$savr = preg_split('/\-/', $avr, 2);
-		$v2 = $savr[0];
-		$r2 = $savr[1];
-
-		return $this->compareVersion($v2, $r2, $v1, $r1) > 0 ? true : false;
+		return $this->compareVersion($avr, $vr) > 0 ? true : false;
 
 	}
 
@@ -2142,10 +2093,6 @@ class WIFF
 	public function postUpgrade($fromVersion, $toVersion) {
 		include_once('lib/Lib.System.php');
 
-		$v = preg_split('/-/', $fromVersion, 2);
-		$fromVer = $v[0];
-		$fromRel = $v[1];
-
 		$wiff_root = getenv('WIFF_ROOT');
 		if( $wiff_root !== false ) {
 			$wiff_root = $wiff_root.DIRECTORY_SEPARATOR;
@@ -2159,46 +2106,34 @@ class WIFF
 
 		$migrList = array();
 		while( $migr = readdir($dir) ) {
-			if( ! preg_match('/^\d+\.\d+\.\d+-\d+$/', $migr) ) {
-				continue;
-			}
-			$v = preg_split('/-/', $migr, 2);
-			$migrVer = $v[0];
-			$migrRel = $v[1];
-			array_push($migrList,
-			array(
-			 'migr' => $migr,
-			 'ver' => $migrVer,
-			 'rel' => $migrRel
-			)
-			);
+			array_push($migrList, $migr);
 		}
 
 		usort($migrList, array($this, 'postUpgradeCompareVersion'));
 
 		foreach( $migrList as $migr ) {
-			if( $this->compareVersion($migr['ver'], $migr['rel'], $fromVer, $fromRel) <= 0 ) {
+			if( $this->compareVersion($migr, $fromVersion) <= 0 ) {
 				continue;
 			}
 
-			error_log(__CLASS__."::".__FUNCTION__." ".sprintf("Executing migr script '%s'.", $migr['migr']));
-			$temp = tempnam(null, sprintf("wiff_migr_%s", $migr['migr']));
+			error_log(__CLASS__."::".__FUNCTION__." ".sprintf("Executing migr script '%s'.", $migr));
+			$temp = tempnam(null, sprintf("wiff_migr_%s", $migr));
 			if( $temp === false ) {
 				$this->errorMessage = "Could not create temp file.";
 				return false;
 			}
 
-			$migrScript = sprintf("%s/%s/%s", $wiff_root, 'migr', $migr['migr']);
+			$migrScript = sprintf("%s/%s/%s", $wiff_root, 'migr', $migr);
 			$cmd = sprintf("%s > %s 2>&1", escapeshellarg($migrScript), escapeshellarg($temp));
 			system($cmd, $ret);
 			$output = file_get_contents($temp);
 			if( $ret !== 0 ) {
-				$err = sprintf("Migr script '%s' returned with error status %s (output=[[[%s]]])", $migr['migr'], $ret, $output);
+				$err = sprintf("Migr script '%s' returned with error status %s (output=[[[%s]]])", $migr, $ret, $output);
 				error_log(__CLASS__."::".__FUNCTION__." ".sprintf("%s", $err));
 				$this->errorMessage = $err;
 				return false;
 			}
-			error_log(__CLASS__."::".__FUNCTION__." ".sprintf("Migr script '%s': Ok.", $migr['migr']));
+			error_log(__CLASS__."::".__FUNCTION__." ".sprintf("Migr script '%s': Ok.", $migr));
 			@unlink($temp);
 		}
 
@@ -2207,7 +2142,7 @@ class WIFF
 	}
 
 	function postUpgradeCompareVersion($a, $b) {
-		return $this->compareVersion($a["ver"], $a["rel"], $b["ver"], $b["rel"]);
+		return version_compare($a, $b);
 	}
 
 	function getLicenseAgreement($ctxName, $moduleName, $licenseName) {
