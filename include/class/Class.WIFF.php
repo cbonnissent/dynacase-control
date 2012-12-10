@@ -977,6 +977,24 @@ class WIFF
 		return (float)($stat['blocks'] * 512);
 	}
 
+    public function verirfyArchiveIntegrity($pathToArchive)
+    {
+        if ($handle = opendir($pathToArchive)) {
+            while (false !== ($file = readdir($handle))) {
+                if (substr($file, -3) === ".gz") {
+                    $result = exec(sprintf("gzip -t %s 2>&1", escapeshellarg($pathToArchive . DIRECTORY_SEPARATOR . $file)) , $output, $retval);
+                    if ($retval != 0) {
+                        $this->errorMessage = sprintf("Archive %s is not correct: %s", $pathToArchive . DIRECTORY_SEPARATOR . $file, $result);
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+        $this->errorMessage = "Can't open archive directory: " . $pathToArchive;
+        return false;
+    }
+
 	public function createContextFromArchive($archiveId, $name, $root, $desc, $url, $vault_root, $pgservice, $remove_profiles, $user_login, $user_password, $clean_tmp_directory = false)
 	{
 
@@ -1155,6 +1173,13 @@ class WIFF
 						$zip->close();
 						return false;
 					}
+
+                    $ret = $this->verirfyArchiveIntegrity($temporary_extract_root);
+                    if ($ret === false) {
+                        unlink($status_file);
+						$zip->close();
+						return false;
+                    }
 
 					// --- Extract context tar gz --- //
 

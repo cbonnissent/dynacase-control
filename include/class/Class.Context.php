@@ -1760,7 +1760,35 @@ class Context
 			// --- Save zip --- //
 			$zip->close();
 
-
+            $wiff = WIFF::getInstance();
+            $ret = $wiff->verirfyArchiveIntegrity($tmp);
+            if ($ret === false) {
+                $this->errorMessage = $wiff->errorMessage;
+                if (file_exists($archived_root."/$archiveId.fcz")) {
+                    unlink($archived_root."/$archiveId.fcz");
+                }
+                unlink($status_file);
+                if (file_exists("$tmp/context.tar.gz")) {
+                    unlink("$tmp/context.tar.gz");
+                }
+                if (file_exists("$dump")) {
+                    unlink("$dump");
+                }
+                if (empty($vaultDirList) === false) {
+                    /*--- Delete vault list --- */
+                    $i = 0;
+                    while ($vaultDirList[$i]) {
+                        if (file_exists($tmp."/vault_".$vaultDirList[$i]["id_fs"].".tar.gz")) {
+                            unlink($tmp."/vault_".$vaultDirList[$i]["id_fs"].".tar.gz");
+                        }
+                        $i++;
+                    }
+                }
+                if (file_exists($tmp."/vault_$id_fs.tar.gz")) {
+                    unlink($tmp."/vault_$id_fs.tar.gz");
+                }
+                return false;
+            }
 
 			// --- Delete status file --- //
 			unlink($status_file);
