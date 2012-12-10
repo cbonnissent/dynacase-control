@@ -2947,6 +2947,12 @@ function installLocal(file) {
 
 					mask.hide();
 
+                    var response = eval('(' + responseObject.responseText + ')');
+                    if (response.error) {
+                        Ext.Msg.alert('Dependencies Error', response.error);
+                        return;
+                    }
+
 					Ext.MessageBox.show({
 								title : 'Dynacase Control',
 								msg : 'Execute which scenario for imported module ?',

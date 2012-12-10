@@ -932,8 +932,11 @@ class Context
 
 		$orderList = array ();
 
-		$this->recursiveOrdering($depsList, $orderList);
+		$ret = $this->recursiveOrdering($depsList, $orderList);
 
+        if ($ret === false) {
+            return false;
+        }
 		// Put toolbox always at the beginning of the list
 		foreach($orderList as $key=>$value){
 			if($value->name == 'dynacase-core' || $value->name == 'dynacase-platform' || $value->name == 'freedom-toolbox'){
@@ -1007,6 +1010,7 @@ class Context
 
 	function recursiveOrdering( & $list, & $orderList)
 	{
+        $count = count($list);
 		foreach ($list as $key=>$mod) {
 			$reqList = $mod->getRequiredModules();
 
@@ -1025,9 +1029,20 @@ class Context
 			}
 		}
 
+        if ($count === count($list)) {
+            $modulesList = "";
+            foreach ($list as $mod) {
+                $modulesList .= ($modulesList ? ",\n" : ""). $mod->name;
+            }
+            $this->errorMessage = sprintf("These modules requirement are in conflict: \n".$modulesList);
+            return false;
+        }
 		if (count($list) != 0) {
-			$this->recursiveOrdering($list, $orderList);
-		}
+			$ret = $this->recursiveOrdering($list, $orderList);
+		} else {
+            return true;
+        }
+        return $ret;
 	}
 
 	/**
