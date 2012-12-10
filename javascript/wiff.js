@@ -2457,13 +2457,14 @@ function updateContextList_success(responseObject, select) {
 										action : function(grid, record, action,
 												row, col) {
 
-											currentModule = {
-												name : record.get('name')
-											};
+                                            currentModule = {
+                                                name :record.get('name')
+                                            };
 
 											switch (action) {
 												case 'x-icon-update' :
 													var operation = 'upgrade';
+                                                    currentModule.name =  record.get('updateName') != undefined && record.get('updateName') != '' ? record.get('updateName') : record.get('name');
 													break;
 												case 'x-icon-param' :
 													var operation = 'parameter';
