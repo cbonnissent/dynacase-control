@@ -521,7 +521,10 @@ class Context
 		$moduleList = array ();
 		foreach ($this->repo as $repository)
 		{
-			$repoModuleList = $repository->getModuleList();
+            /**
+             * @var Repository $repository
+             */
+            $repoModuleList = $repository->getModuleList($this);
 			if ($repoModuleList === false)
 			{
 				$this->errorMessage = sprintf("Error fetching index for repository '%s'.", $repository->name);
@@ -757,7 +760,10 @@ class Context
     public function getModuleAvailSatisfying($name, $comp, $version) {
         $moduleList = array();
         foreach ($this->repo as $repository) {
-            $repoModuleList = $repository->getModuleList();
+            /**
+             * @var Repository $repository
+             */
+            $repoModuleList = $repository->getModuleList($this);
             if ($repoModuleList === false) {
                 $this->errorMessage = sprintf("Error fetching index for repository '%s'.", $repository->name);
                 continue;
@@ -785,6 +791,7 @@ class Context
 		foreach( $modAvails as $mod ) {
 			foreach( $mod->replaces as $replace ) {
 				if( $replace['name'] == $name ) {
+                    $mod->context = $this;
 					return $mod;
 				}
 			}
@@ -841,7 +848,10 @@ class Context
 		$i = 0;
 		while ($i < count($depsList))
 		{
-			$mod = $depsList[$i];
+            /**
+             * @var Module $mod
+             */
+            $mod = $depsList[$i];
 
 			if( ! $this->installerMeetsModuleRequiredVersion($mod) ) {
 				$this->errorMessage = sprintf("Module '%s' (%s-%s) requires installer %s", $mod->name, $mod->version, $mod->release, $this->errorMessage);
@@ -945,6 +955,7 @@ class Context
 					array_push($removeList, $replacedModule);
 					// and mark the main module for 'upgrade'
 					$mod->needphase = 'upgrade';
+                    $mod->errorMessage = "Warning: replace ".$replacedModule->name.", versions are not checked";
 				}
 			}
 		}

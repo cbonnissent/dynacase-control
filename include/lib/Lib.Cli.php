@@ -445,10 +445,14 @@ function wiff_context_module_install_local(&$context, &$options, &$pkgName, &$ar
 			if( $module->needphase == 'upgrade' ) {
 				$op = '(u)';
 			} else if( $module->needphase == 'replaced' ) {
-				$op = '(r)';
+				$op = '(r) (replaced by ' . (($module->replacedBy) ? $module->replacedBy : 'unknown') . ')';
 			}
-			echo sprintf("- %s-%s-%s %s\n", $module->name, $module->version, $module->release, $op);
-		}
+            $error = "";
+            if ($module->errorMessage) {
+                $error = "\033[0;31m (".$module->errorMessage.")\033[0;00m";
+            }
+            echo sprintf("- %s-%s-%s %s%s\n", $module->name, $module->version, $module->release, $op, $error);
+        }
 		$ret = param_ask("Proceed with installation", "Y/n", "Y");
 		if( !preg_match('/^(y|yes|)$/i', $ret) ) {
 			return 0;
@@ -486,11 +490,15 @@ function wiff_context_module_install_remote(&$context, &$options, &$modName, &$a
 			if( $module->needphase == 'upgrade' ) {
 				$op = '(u)';
 			} else if( $module->needphase == 'replaced' ) {
-				$op = '(r)';
+                $op = '(r) (replaced by ' . (($module->replacedBy) ? $module->replacedBy : 'unknown') . ')';
 			}
-			echo sprintf("- %s-%s-%s %s\n", $module->name, $module->version, $module->release, $op);
-		}
-		$ret = param_ask("Proceed with installation", "Y/n", "Y");
+            $error = "";
+            if ($module->errorMessage) {
+                $error = "\033[0;31m (".$module->errorMessage.")\033[0;00m";
+            }
+            echo sprintf("- %s-%s-%s %s%s\n", $module->name, $module->version, $module->release, $op, $error);
+        }
+        $ret = param_ask("Proceed with installation", "Y/n", "Y");
 		if( !preg_match('/^(y|yes|)$/i', $ret) ) {
 			return 0;
 		}
@@ -853,9 +861,13 @@ function wiff_context_module_upgrade_local(&$context, &$options, &$pkgName, &$ar
 			if( $module->needphase == 'upgrade' ) {
 				$op = '(u)';
 			} else if( $module->needphase == 'replaced' ) {
-				$op = '(r)';
+                $op = '(r) (replaced by ' . (($module->replacedBy) ? $module->replacedBy : 'unknown') . ')';
 			}
-			echo sprintf("- %s-%s-%s %s\n", $module->name, $module->version, $module->release, $op);
+            $error = "";
+            if ($module->errorMessage) {
+                $error = "\033[0;31m (".$module->errorMessage.")\033[0;00m";
+            }
+			echo sprintf("- %s-%s-%s %s%s\n", $module->name, $module->version, $module->release, $op, $error);
 		}
 		$ret = param_ask("Proceed with upgrade", "Y/n", "Y");
 		if( !preg_match('/^(y|yes|)$/i', $ret) ) {
@@ -904,10 +916,14 @@ function wiff_context_module_upgrade_remote(&$context, &$options, &$modName, &$a
 			if( $module->needphase == 'upgrade' ) {
 				$op = '(u)';
 			} else if( $module->needphase == 'replaced' ) {
-				$op = '(r)';
+                $op = '(r) (replaced by ' . (($module->replacedBy) ? $module->replacedBy : 'unknown') . ')';
 			}
-			echo sprintf("- %s-%s-%s %s\n", $module->name, $module->version, $module->release, $op);
-		}
+            $error = "";
+            if ($module->errorMessage) {
+                $error = "\033[0;31m (".$module->errorMessage.")\033[0;00m";
+            }
+            echo sprintf("- %s-%s-%s %s%s\n", $module->name, $module->version, $module->release, $op, $error);
+        }
 		$ret = param_ask("Proceed with upgrade", "Y/n", "Y");
 		if( !preg_match('/^(y|yes|)$/i', $ret) ) {
 			return 0;

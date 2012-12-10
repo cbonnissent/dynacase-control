@@ -530,7 +530,10 @@ if ( isset ($_REQUEST['saveContext']))
 // Request to archive an existing context
 if ( isset ($_REQUEST['archiveContext']))
 {
-	$context = $wiff->getContext($_REQUEST['name']);
+    /**
+     * @var Context $context
+     */
+    $context = $wiff->getContext($_REQUEST['name']);
 
 	if (!$wiff->errorMessage)
 	{

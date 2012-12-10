@@ -238,7 +238,7 @@ class Repository
      * Get Module list (available modules on repository)
      * @return array of object Module
      */
-    public function getModuleList()
+    public function getModuleList($context = null)
     {
         require_once ('class/Class.WIFF.php');
         require_once ('class/Class.Module.php');
@@ -267,7 +267,7 @@ class Repository
         $moduleList = array ();
         foreach ($modules as $module)
         {
-            $moduleList[] = new Module(null, $this, $module, false);
+            $moduleList[] = new Module($context, $this, $module, false);
         }
 
         unlink($tmpfile);

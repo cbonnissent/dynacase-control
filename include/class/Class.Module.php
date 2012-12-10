@@ -517,8 +517,7 @@ class Module
             $params = $contextsXpath->query("/contexts/context[@name='".$this->context->name."']/modules/module[@name='".$this->name."' and @status='".$this->status."']/parameters/param");
             if ($params->length <= 0)
             {
-                $this->errorMessage = sprintf("Cound not find parameters for module '%s' in context '%s'.", $this->name, $this->context->name);
-                return false;
+                return array();
             }
 
             $pSeen = array ();
