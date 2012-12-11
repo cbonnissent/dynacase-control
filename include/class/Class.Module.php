@@ -12,6 +12,7 @@ class Module
      * xml attributes
      */
     public $name;
+    public $updateName;
     public $vendor;
     public $version;
     public $release;

@@ -160,7 +160,6 @@ class Context
 		} else {
 			$query = sprintf("/contexts/context[@name='%s']/modules/module[@name='%s']", $this->name, $module->name);
 		}
-			
 		# $existingModuleNodeList = $contextsXPath->query("/contexts/context[@name='".$this->name."']/modules/module[@name='".$module->name."']");
 		$existingModuleNodeList = $contextsXPath->query($query);
 		if ($existingModuleNodeList->length <= 0)
@@ -513,7 +512,7 @@ class Context
 
 	/**
 	 * Get the list of available module Objects in the repositories of the context
-	 * @param boolean onlyNotInstalled only return available and not installed modules
+	 * @param boolean $onlyNotInstalled only return available and not installed modules
 	 * @return array of module Objects
 	 */
 	public function getAvailableModuleList($onlyNotInstalled = false)
@@ -545,18 +544,36 @@ class Context
 
 			foreach ($installedModuleList as $installedModule)
 			{
-				foreach ($moduleList as $moduleKey=>$module)
+                /**
+                 * @var Module $installedModule
+                 */
+                $deleted = 0;
+                $replaceList = $installedModule->getReplacesModules();
+                $replaceListName = array();
+                foreach ($replaceList as $replace) {
+                    $replaceListName[] = $replace["name"];
+                }
+                foreach ($moduleList as $moduleKey=>$module)
 				{
+                    /**
+                     * @var Module $module
+                     */
 					if ($installedModule->name == $module->name)
 					{
-						unset ($moduleList[$moduleKey]);
-						$moduleList = array_values($moduleList);
-					} elseif ($installedModule->updateName != '' && $installedModule->updateName == $module->name) {
-						unset ($moduleList[$moduleKey]);
-						$moduleList = array_values($moduleList);
-					}
-				}
-			}
+						unset ($moduleList[$moduleKey - $deleted]);
+                        $moduleList = array_values($moduleList);
+                        $deleted++;
+                    } elseif ($installedModule->updateName != '' && $installedModule->updateName == $module->name) {
+                        unset ($moduleList[$moduleKey - $deleted]);
+                        $moduleList = array_values($moduleList);
+                        $deleted++;
+                    } elseif (!empty($replaceListName) && in_array($module->name, $replaceListName)) {
+                        unset ($moduleList[$moduleKey - $deleted]);
+                        $moduleList = array_values($moduleList);
+                        $deleted++;
+                    }
+                }
+            }
 
 		}
 
@@ -584,6 +601,9 @@ class Context
 		$list = array ();
 		foreach ($tmp as $module)
 		{
+            /**
+             * @var Module $module
+             */
 			if (array_key_exists($module->name, $seen))
 			{
 				continue ;
