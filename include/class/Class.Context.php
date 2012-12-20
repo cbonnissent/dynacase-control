@@ -1469,6 +1469,12 @@ class Context
 		return $this->removeModule($moduleName, 'downloaded');
 	}
 
+    private function writeArchiveError($archiveId, $archived_root) {
+        $error_file = $archived_root . DIRECTORY_SEPARATOR . $archiveId . '.error';
+        $error_handle = fopen($error_file, "w");
+        fwrite($error_handle, $this->errorMessage);
+    }
+
 	public function archiveContext($archiveName,$archiveDesc = '', $vaultExclude = false) {
 		$tmp = 'archived-tmp';
 
@@ -1540,9 +1546,7 @@ class Context
 				// If more than one context with name
 				$this->errorMessage = "Duplicate contexts with same name";
 				$zip->close();
-				if (file_exists($archived_root."/$archiveId.fcz")) {
-					unlink($archived_root."/$archiveId.fcz");
-				}
+                $this->writeArchiveError($archiveId, $archived_root);
 				unlink($status_file);
 				return false;
 			}
@@ -1561,9 +1565,10 @@ class Context
 			$vaultList = $this->getVaultList();
 			if( $vaultList === false ) {
 				$zip->close();
-				if (file_exists($archived_root."/$archiveId.fcz")) {
-					unlink($archived_root."/$archiveId.fcz");
-				}
+                if (file_exists($archived_root . "/$archiveId.fcz")) {
+                    unlink($archived_root . "/$archiveId.fcz");
+                }
+
 				unlink($status_file);
 				return false;
 			}
@@ -1571,9 +1576,7 @@ class Context
 			if( $realContextRootPath === false ) {
 				$this->errorMessage = sprintf("Error getting real path for '%s'", $this->root);
 				$zip->close();
-				if (file_exists($archived_root."/$archiveId.fcz")) {
-					unlink($archived_root."/$archiveId.fcz");
-				}
+                $this->writeArchiveError($archiveId, $archived_root);
 				unlink($status_file);
 				return false;
 			}
@@ -1609,9 +1612,7 @@ class Context
 					unlink("$tmp/context.tar.gz");
 				}
 				$zip->close();
-				if (file_exists($archived_root."/$archiveId.fcz")) {
-					unlink($archived_root."/$archiveId.fcz");
-				}
+                $this->writeArchiveError($archiveId, $archived_root);
 				unlink($status_file);
 				return false;
 			}
@@ -1622,9 +1623,7 @@ class Context
 					unlink("$tmp/context.tar.gz");
 				}
 				$zip->close();
-				if (file_exists($archived_root."/$archiveId.fcz")) {
-					unlink($archived_root."/$archiveId.fcz");
-				}
+                $this->writeArchiveError($archiveId, $archived_root);
 				unlink($status_file);
 				return false;
 			}
@@ -1647,9 +1646,7 @@ class Context
 					unlink("$dump");
 				}
 				$zip->close();
-				if (file_exists($archived_root."/$archiveId.fcz")) {
-					unlink($archived_root."/$archiveId.fcz");
-				}
+                $this->writeArchiveError($archiveId, $archived_root);
 				unlink($status_file);
 				return false;
 			}
@@ -1664,9 +1661,7 @@ class Context
 					unlink("$dump");
 				}
 				$zip->close();
-				if (file_exists($archived_root."/$archiveId.fcz")) {
-					unlink($archived_root."/$archiveId.fcz");
-				}
+                $this->writeArchiveError($archiveId, $archived_root);
 				unlink($status_file);
 				return false;
 			}
@@ -1683,9 +1678,7 @@ class Context
 						unlink("$dump");
 					}
 					$zip->close();
-					if (file_exists($archived_root."/$archiveId.fcz")) {
-						unlink($archived_root."/$archiveId.fcz");
-					}
+                    $this->writeArchiveError($archiveId, $archived_root);
 					unlink($status_file);
 				}
 
@@ -1715,9 +1708,7 @@ class Context
 								$i++;
 							}
 							$zip->close();
-							if (file_exists($archived_root."/$archiveId.fcz")) {
-								unlink($archived_root."/$archiveId.fcz");
-							}
+                            $this->writeArchiveError($archiveId, $archived_root);
 							unlink($status_file);
 							return false;
 						}
@@ -1739,9 +1730,7 @@ class Context
 								$i++;
 							}
 							$zip->close();
-							if (file_exists($archived_root."/$archiveId.fcz")) {
-								unlink($archived_root."/$archiveId.fcz");
-							}
+                            $this->writeArchiveError($archiveId, $archived_root);
 							unlink($status_file);
 							return false;
 						}
@@ -1776,9 +1765,7 @@ class Context
 			$err = $zip->addFromString('info.xml',$xml);
 			if ($err === false) {
 				$zip->close();
-				if (file_exists($archived_root."/$archiveId.fcz")) {
-					unlink($archived_root."/$archiveId.fcz");
-				}
+
 				unlink($status_file);
 				if (file_exists("$tmp/context.tar.gz")) {
 					unlink("$tmp/context.tar.gz");
@@ -1800,6 +1787,7 @@ class Context
 					unlink($tmp."/vault_$id_fs.tar.gz");
 				}
 				$this->errorMessage = sprintf("Could not add 'info.xml' to archive: %s", $zip->getStatusString());
+                $this->writeArchiveError($archiveId, $archived_root);
 				return false;
 			}
 
@@ -1810,9 +1798,7 @@ class Context
             $ret = $wiff->verirfyArchiveIntegrity($tmp);
             if ($ret === false) {
                 $this->errorMessage = $wiff->errorMessage;
-                if (file_exists($archived_root."/$archiveId.fcz")) {
-                    unlink($archived_root."/$archiveId.fcz");
-                }
+
                 unlink($status_file);
                 if (file_exists("$tmp/context.tar.gz")) {
                     unlink("$tmp/context.tar.gz");
@@ -1833,6 +1819,7 @@ class Context
                 if (file_exists($tmp."/vault_$id_fs.tar.gz")) {
                     unlink($tmp."/vault_$id_fs.tar.gz");
                 }
+                $this->writeArchiveError($archiveId, $archived_root);
                 return false;
             }
 
@@ -1863,6 +1850,7 @@ class Context
 			$this->errorMessage = sprintf("Cannot create Zip archive '%s': %s", $zipfile, $zip->getStatusString());
 			// --- Delete status file --- //
 			unlink($status_file);
+            $this->writeArchiveError($archiveId, $archived_root);
 		}
 
 		return false ;
