@@ -28,7 +28,7 @@ function updateArchiveList(select) {
 }
 
 function reloadArchiveStore() {
-	if (archiveStore[currentArchive]) {
+	if (archiveStore[currentArchive] && archiveStore[currentArchive].getCount() > 0) {
 		archiveStore[currentArchive].load();
 	}
 }
@@ -38,10 +38,12 @@ function updateArchiveList_success(responseObject, select) {
 	var response = eval('(' + responseObject.responseText + ')');
 	if (response.error) {
 		Ext.Msg.alert('Server Error', response.error);
-	} else {
-		var data = response.data;
-
-		archiveList = data;
+	}
+    var data = response.data;
+    if (!data) {
+        return;
+    }
+    archiveList = data;
 
 		var panel = Ext.getCmp('archive-list');
 		panel.items.each(function(item, index, len) {
@@ -51,14 +53,15 @@ function updateArchiveList_success(responseObject, select) {
 				}, panel);
 
 		for (var i = 0; i < data.length; i++) {
+            var hasError = data[i].error ? true : false;
 			panel.add({
 				title : data[i].name
 						+ (data[i].datetime ? ' ('
 								+ data[i].datetime.substr(0, 10) + ')' : ''),
 				iconCls : (!data[i].inProgress)
-						? 'x-icon-archive'
+						? (hasError ? 'x-icon-archive-error': 'x-icon-archive')
 						: 'x-icon-loading',
-				    tabTip : '('+(data[i].datetime?data[i].datetime.substr(0, 16):'')+') '+(data[i].description?data[i].description:''),
+                tabTip : '('+(data[i].datetime?data[i].datetime.substr(0, 16):'')+') '+(data[i].description?data[i].description:''),
 				style : 'padding:10px;',
 				layout : 'fit',
 				disabled : data[i].inProgress,
@@ -73,7 +76,7 @@ function updateArchiveList_success(responseObject, select) {
 					title : data[i].name,
 					archive : data[i],
 					iconCls : (!data[i].inProgress)
-							? 'x-icon-archive'
+							? (hasError ? 'x-icon-archive-error': 'x-icon-archive')
 							: 'x-icon-loading',
 					id : 'archive-' + data[i].name,
 					bodyStyle : 'overflow-y:auto;',
@@ -90,6 +93,7 @@ function updateArchiveList_success(responseObject, select) {
 							tooltip : 'Create Context from Archive',
 							iconCls : 'x-icon-create',
 							archive : data[i],
+                            disabled: hasError,
 							handler : function(button) {
 
 								var win = new Ext.Window({
@@ -228,7 +232,7 @@ function updateArchiveList_success(responseObject, select) {
 																	'Dynacase Control',
 																	'A name must be provided.');
 													return;
-												};
+												}
 
 												if (!Ext
 														.getCmp('create-archive-form')
@@ -240,7 +244,7 @@ function updateArchiveList_success(responseObject, select) {
 																	'Dynacase Control',
 																	'A root must be provided.');
 													return;
-												};
+												}
 
 												if (!Ext
 														.getCmp('create-archive-form')
@@ -252,7 +256,7 @@ function updateArchiveList_success(responseObject, select) {
 																	'Dynacase Control',
 																	'A vault path must be provided.');
 													return;
-												};
+												}
 
 												if (!Ext
 														.getCmp('create-archive-form')
@@ -264,7 +268,7 @@ function updateArchiveList_success(responseObject, select) {
 																	'Dynacase Control',
 																	'A database service must be provided.');
 													return;
-												};
+												}
 
 												if (Ext
 														.getCmp('create-archive-form')
@@ -281,7 +285,7 @@ function updateArchiveList_success(responseObject, select) {
 																		'Dynacase Control',
 																		'If you remove profiles, you must specify a user login.');
 														return;
-													};
+													}
 													if (!Ext
 															.getCmp('create-archive-form')
 															.getForm()
@@ -292,8 +296,8 @@ function updateArchiveList_success(responseObject, select) {
 																		'Dynacase Control',
 																		'If you remove profiles, you must specify a user password.');
 														return;
-													};
-												};
+													}
+												}
 
 												mask = new Ext.LoadMask(Ext
 																.getBody(), {
@@ -456,12 +460,17 @@ function updateArchiveList_success(responseObject, select) {
 									+ '</li><li class="x-form-item"><b>Size</b> : '
 									+ Ext.util.Format
 											.htmlEncode(this.archive.size)
-							                + ', <b>Vault saved :</b> '
+							        + '</li><li class="x-form-item"><b>Vault saved :</b> '
 									+ Ext.util.Format
 											.htmlEncode(this.archive.vault)
-									+ '<li></ul><p>';
-
-							this.body.update(contextInfoHtml);
+									+ '</li>';
+                            if (this.archive.error) {
+                                contextInfoHtml += '<li class="x-form-item error"><b>Error :</b> '
+                                    + Ext.util.Format
+                                    .htmlEncode(this.archive.error)
+                                    + '</li>';
+                            }
+							this.body.update(contextInfoHtml+ "</ul>");
 
 						},
 						listeners : {
@@ -482,18 +491,18 @@ function updateArchiveList_success(responseObject, select) {
 
 								currentArchive = panel.archive.id;
 
-								archiveStore[currentArchive] = new Ext.data.JsonStore(
-										{
-											data : panel.archive.moduleList,
-											fields : ['name', 'versionrelease',
-													'availableversionrelease',
-													'description', 'infopath',
-													'errorstatus'],
-											sortInfo : {
-												field : 'name',
-												direction : "ASC"
-											}
-										});
+                                    archiveStore[currentArchive] = new Ext.data.JsonStore(
+                                        {
+                                            data : panel.archive.moduleList,
+                                            fields : ['name', 'versionrelease',
+                                                'availableversionrelease',
+                                                'description', 'infopath',
+                                                'errorstatus'],
+                                            sortInfo : {
+                                                field : 'name',
+                                                direction : "ASC"
+                                            }
+                                        });
 
 								var selModel = new Ext.grid.RowSelectionModel();
 
@@ -561,7 +570,6 @@ function updateArchiveList_success(responseObject, select) {
 
 			}
 		}
-	}
 
 }
 

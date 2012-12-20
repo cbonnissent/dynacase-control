@@ -817,6 +817,12 @@ class WIFF
 
 	}
 
+    private function addErrorToArchiveInfo($errorMsg, array $archiveContext, array &$archivedContextList) {
+        $this->errorMessage .= $this->errorMessage ? "\n" : "" . $errorMsg;
+        $archiveContext['error'] = $errorMsg;
+        $archivedContextList[] = $archiveContext;
+    }
+
 	public function getArchivedContextList()
 	{
 
@@ -854,19 +860,35 @@ class WIFF
 
 					$zipfile = $archived_root.DIRECTORY_SEPARATOR.$file;
 					$size = $this->filesize_stat($zipfile);
+                    $archiveContext = array(
+                        "urlfile" => wiff::archive_filepath . DIRECTORY_SEPARATOR . $file,
+                        "moduleList" => array(),
+                        "id" => $fmatch["basename"],
+                        "size" => $size / (1024 * 1024) >= 1024 ? sprintf("%.3f Go", $size / (1024.0 * 1024.0 * 1024.0)) : sprintf("%.3f Mo", $size / (1024.0 * 1024.0)),
+                        "datetime" => "-",
+                        "description" => "-",
+                        "vault" => "-",
+                        "name" => "invalid archive"
+                    );
 
+                    if (file_exists($archived_root . DIRECTORY_SEPARATOR .$fmatch["basename"].".error")) {
+                        $file = $fmatch["basename"].".error";
+                        $error_handle = fopen($archived_root . DIRECTORY_SEPARATOR . $file, 'r');
+                        $this->addErrorToArchiveInfo("Error with archive ".$zipfile." : ". fread($error_handle, filesize($archived_root . DIRECTORY_SEPARATOR . $file)), $archiveContext, $archivedContextList);
+                        continue;
+                    }
 
 					$zip = new ZipArchiveCmd();
 					$ret = $zip->open($zipfile);
 					if( $ret === false ) {
-						$this->errorMessage = "Error when opening archive.";
-						return false;
+                        $this->addErrorToArchiveInfo("Error when opening archive.", $archiveContext, $archivedContextList);
+                        continue;
 					}
 
 					$zipIndex = $zip->getIndex();
 					if( $zipIndex === false ) {
-						$this->errorMessage = sprintf("Error getting index from Zip file '%s': %s", $zipfile, $zip->getStatusString());
-						return false;
+                        $this->addErrorToArchiveInfo(sprintf("Error getting index from Zip file '%s': %s", $zipfile, $zip->getStatusString()), $archiveContext, $archivedContextList);
+                        continue;
 					}
 
 					$foundInfoXML = false;
@@ -877,22 +899,22 @@ class WIFF
 						}
 					}
 					if( ! $foundInfoXML ) {
-						$this->errorMessage = sprintf("Could not find 'info.xml' in content index of Zip file '%s'.", $zipfile);
-						return false;
+                        $this->addErrorToArchiveInfo(sprintf("Could not find 'info.xml' in content index of Zip file '%s'.", $zipfile), $archiveContext, $archivedContextList);
+                        continue;
 					}
 
 					$info_content = $zip->getFileContentFromName('info.xml');
 					if( $info_content === false ) {
-						$this->errorMessage = sprintf("Error extracting 'info.xml' from '%s': %s", $zipfile, $zip->getStatusString());
-						return false;
+                        $this->addErrorToArchiveInfo(sprintf("Error extracting 'info.xml' from '%s': %s", $zipfile, $zip->getStatusString()), $archiveContext, $archivedContextList);
+                        continue;
 					}
 
 					$xml = new DOMDocument();
 					$xml->loadXML($info_content);
 					if ($xml === false)
 					{
-						$this->errorMessage = sprintf("Error loading XML file '%s'.", $info);
-						return false;
+                        $this->addErrorToArchiveInfo(sprintf("Error loading XML file '%s'.", $info_content), $archiveContext, $archivedContextList);
+                        continue;
 					}
 
 					$xpath = new DOMXpath($xml);
@@ -1484,6 +1506,13 @@ class WIFF
 		}
 
 		$archived_root = $wiff_root.WIFF::archive_filepath;
+
+        if (file_exists($archived_root . $archiveId .'.error')) {
+            unlink($archived_root . $archiveId .'.error');
+        }
+        if (file_exists($archived_root . $archiveId .'.sts')) {
+            unlink($archived_root . $archiveId .'.sts');
+        }
 
 		if(unlink($archived_root.$archiveId.'.fcz'))
 		{
