@@ -118,19 +118,20 @@ function sedwebinst_rmdir($dir)
     rmdir($dir);
 }
 
-function sedwebinst_rename($old, $new) {
-	$chmod = (file_exists($new) && ($chmod = stat($new)) !== false) ? $chmod['mode'] : false;
-	$ret = rename($old, $new);
-	if ($ret === false) {
-		return false;
-	}
-	if ($chmod !== false) {
-		$ret = chmod($new, $chmod);
-		if ($ret === false) {
-			return false;
-		}
-	}
-	return true;
+function sedwebinst_rename($old, $new)
+{
+    $chmod = (file_exists($new) && ($chmod = stat($new)) !== false) ? $chmod['mode'] : false;
+    $ret = rename($old, $new);
+    if ($ret === false) {
+        return false;
+    }
+    if ($chmod !== false) {
+        $ret = chmod($new, $chmod);
+        if ($ret === false) {
+            return false;
+        }
+    }
+    return true;
 }
 
 function sedwebinst_keybread()
