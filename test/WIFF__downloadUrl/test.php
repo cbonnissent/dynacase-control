@@ -1,5 +1,11 @@
 <?php
-include_once('../test.php');
+/*
+ * @author Anakeen
+ * @license http://www.fsf.org/licensing/licenses/agpl-3.0.html GNU Affero General Public License
+ * @package FDL
+ */
+
+include_once ('../test.php');
 
 $url = "http://ftp.freedom-ecm.org/frdom/webinst/2_12/content.xml";
 
@@ -7,9 +13,9 @@ $wiff = WIFF::getInstance();
 
 echo "* Downloading '$url' without proxy:\n";
 $tempf = $wiff->downloadUrl($url);
-if( $tempf === false ) {
-  echo "ERROR\n";
-  exit( 1 );
+if ($tempf === false) {
+    echo "ERROR\n";
+    exit(1);
 }
 
 echo "OK ($tempf)\n";
@@ -23,14 +29,13 @@ $wiff->setParam('proxy-username', 'foo');
 $wiff->setParam('proxy-password', 'bar');
 
 $tempf = $wiff->downloadUrl($url);
-if( $tempf === false ) {
-  echo "ERROR\n";
-  exit( 1 );
+if ($tempf === false) {
+    echo "ERROR\n";
+    exit(1);
 }
 
 echo "OK ($tempf)\n";
 echo "\n";
 
-exit( 0 );
-
+exit(0);
 ?>

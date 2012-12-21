@@ -1,6 +1,9 @@
 <?php
-
-
+/*
+ * @author Anakeen
+ * @license http://www.fsf.org/licensing/licenses/agpl-3.0.html GNU Affero General Public License
+ * @package FDL
+ */
 /**
  * Phase Class
  * @author Anakeen
@@ -9,82 +12,77 @@
 
 class Phase
 {
-
+    
     public $xmlNode;
     public $name;
-
-	public $module;
-
-	/**
-	 * @param string $phaseName the name of the phase
-	 * @param XMLNode $xmlNode XMLNode object
-	 * @param Module $module object Module
-	 */
+    
+    public $module;
+    /**
+     * @param string $phaseName the name of the phase
+     * @param XMLNode $xmlNode XMLNode object
+     * @param Module $module object Module
+     */
     public function __construct($phaseName, $xmlNode, $module)
     {
         $this->name = $phaseName;
         $this->xmlNode = $xmlNode;
-		$this->module = $module;
+        $this->module = $module;
     }
-
     /**
      * Get Process list
      * @return array of object Process
      */
     public function getProcessList()
     {
-      require_once('class/Class.Process.php');
-
-        $plist = array ();
-
-        if (!in_array($this->name, array (
-        'pre-install', 'pre-upgrade', 'pre-remove',
-        'unpack', 'remove', 'param',
-        'post-install', 'post-upgrade', 'post-remove', 'post-param',
-        'reconfigure',
-		'unregister-module',
-		'purge-unreferenced-parameters-value'
-        )
-        ))
-        {
+        require_once ('class/Class.Process.php');
+        
+        $plist = array();
+        
+        if (!in_array($this->name, array(
+            'pre-install',
+            'pre-upgrade',
+            'pre-remove',
+            'unpack',
+            'remove',
+            'param',
+            'post-install',
+            'post-upgrade',
+            'post-remove',
+            'post-param',
+            'reconfigure',
+            'unregister-module',
+            'purge-unreferenced-parameters-value'
+        ))) {
             return $plist;
         }
-
-	// Special internal hard coded phase
-	if( $this->name == 'unregister-module' ) {
-	  return $plist;
-	}
-	if( $this->name == 'purge-unreferenced-parameters-value' ) {
-	  return $plist;
-	}
-
-	// Get processes for the phase from module's info.xml
+        // Special internal hard coded phase
+        if ($this->name == 'unregister-module') {
+            return $plist;
+        }
+        if ($this->name == 'purge-unreferenced-parameters-value') {
+            return $plist;
+        }
+        // Get processes for the phase from module's info.xml
         $phaseNodeList = $this->xmlNode->getElementsByTagName($this->name);
-        if ($phaseNodeList->length <= 0)
-        {
+        if ($phaseNodeList->length <= 0) {
             return $plist;
         }
         $phaseNode = $phaseNodeList->item(0);
-
+        
         $processes = $phaseNode->childNodes;
-        foreach ($processes as $process)
-        {
-            if (!($process instanceof DomComment))
-            {
+        foreach ($processes as $process) {
+            if (!($process instanceof DomComment)) {
                 $xmlStr = $process->ownerDocument->saveXML($process);
-
+                
                 $xmlStr = ltrim($xmlStr); // @TODO While making this loop, there are occurencies of $xmlStr composed of spaces only. Check why. The ltrim correct this but should not by required.
-                if ($xmlStr != '')
-                {
-                    $plist[] = new Process($xmlStr,$this);
+                if ($xmlStr != '') {
+                    $plist[] = new Process($xmlStr, $this);
                 }
             }
-
         }
-
+        
         return $plist;
     }
-
     /**
      * Get Process by rank in list and xml
      * @return object Process or false in case of error
@@ -92,35 +90,31 @@ class Phase
      */
     public function getProcess($rank)
     {
-//        if (!in_array($this->name, array (
-//        'pre-install', 'pre-upgrade', 'pre-remove',
-//        'unpack', 'remove', 'param',
-//        'register-xml', 'unregister-xml',
-//        'post-install', 'post-upgrade', 'post-remove', 'post-param'
-//        )
-//        ))
-//        {
-//            return false;
-//        }
-//
-//        $phaseNodeList = $this->xmlNode->getElementsByTagName($this->name);
-//        if ($phaseNodeList->length <= 0)
-//        {
-//            return $plist;
-//        }
-//        $phaseNode = $phaseNodeList->item(0);
-//
-//        $process = $phaseNode->childNodes->item($rank);
-//        if ($process === null)
-//        {
-//            return false;
-//        }
-
-		$processList = $this->getProcessList();
-		
-
+        //        if (!in_array($this->name, array (
+        //        'pre-install', 'pre-upgrade', 'pre-remove',
+        //        'unpack', 'remove', 'param',
+        //        'register-xml', 'unregister-xml',
+        //        'post-install', 'post-upgrade', 'post-remove', 'post-param'
+        //        )
+        //        ))
+        //        {
+        //            return false;
+        //        }
+        //
+        //        $phaseNodeList = $this->xmlNode->getElementsByTagName($this->name);
+        //        if ($phaseNodeList->length <= 0)
+        //        {
+        //            return $plist;
+        //        }
+        //        $phaseNode = $phaseNodeList->item(0);
+        //
+        //        $process = $phaseNode->childNodes->item($rank);
+        //        if ($process === null)
+        //        {
+        //            return false;
+        //        }
+        $processList = $this->getProcessList();
+        
         return $processList[$rank];
     }
-
-
 }
