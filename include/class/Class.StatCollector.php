@@ -3,7 +3,7 @@
  * @author Anakeen
  * @license http://www.fsf.org/licensing/licenses/agpl-3.0.html GNU Affero General Public License
  * @package FDL
- */
+*/
 /**
  * StatCollector Class
  * @author Anakeen
@@ -12,11 +12,24 @@
 
 class StatCollector
 {
+    /**
+     * @var DomDocument $dom
+     */
     private $dom = null;
     private $stats = null;
-    
+    /**
+     * @var WIFF $wiff
+     */
     private $wiff = null;
+    /**
+     * @var Context $context
+     */
     private $context = null;
+    /**
+     * Version of dynacase-core in the context
+     * @var string $coreversion
+     */
+    private $coreVersion = '';
     /**
      * The last error message.
      *
@@ -65,6 +78,8 @@ class StatCollector
         $this->_collect_contextPHP();
         $this->_collect_contextPostgresql();
         $this->_collect_contextSystem();
+        $this->_collect_users_number();
+        $this->_collect_date();
         return $this;
     }
     /**
@@ -80,6 +95,47 @@ class StatCollector
         }
         
         return $this->dom->saveXML();
+    }
+    
+    private function _collect_date()
+    {
+        $dateNode = $this->dom->createElement('date');
+        $dateNode->setAttribute('value', date('c'));
+        
+        $this->stats->appendChild($dateNode);
+        return $this;
+    }
+    /**
+     * Collect users' number
+     *
+     * @return $this the current object
+     */
+    private function _collect_users_number()
+    {
+        $pgservice_core = $this->context->getParamByName('core_db');
+        if ($pgservice_core == '') {
+            $this->last_error = sprintf("Undefined or empty core_db parameter in context '%s'.", $this->context->name);
+            return false;
+        }
+        $conn = pg_connect(sprintf('service=%s', $pgservice_core));
+        if ($conn === false) {
+            $this->last_error = sprintf("Could not connect to pg service '%s'.", $pgservice_core);
+            return false;
+        }
+        $whereQuery = "accounttype = 'U'";
+        if (version_compare($this->coreVersion, "3.2") < 0) {
+            $whereQuery = "isgroup != 'Y'";
+        }
+        $result = pg_query($conn, "SELECT count(*) FROM users where " . $whereQuery);
+        if ($result === false) {
+            $this->last_error = sprintf("Could not get users' number '%s'.", pg_last_error($conn));
+            return false;
+        }
+        $usersNode = $this->dom->createElement('users');
+        $usersNode->setAttribute('number', pg_fetch_result($result, 0, 0));
+        
+        $this->stats->appendChild($usersNode);
+        return $this;
     }
     /**
      * Collect wiff statistics (version)
@@ -128,6 +184,9 @@ class StatCollector
             $node->setAttribute('vendor', $module->vendor);
             $node->setAttribute('builder', $module->builder);
             $modulesNode->appendChild($node);
+            if ($module->name === "dynacase-core" || $module->name === "dynacase-platform") {
+                $this->coreVersion = $module->version;
+            }
         }
         unset($module);
         
