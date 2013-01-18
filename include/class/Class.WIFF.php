@@ -1365,7 +1365,7 @@ class WIFF
     }
     /**
      * Get Context by name
-     * @return object Context or boolean false
+     * @return Context Context or boolean false
      * @param string $name context name
      * @param bool $opt (default false)
      */
