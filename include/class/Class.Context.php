@@ -1899,7 +1899,7 @@ public function deleteFilesFromModule($moduleName)
                 error_log(__CLASS__ . "::" . __FUNCTION__ . " " . sprintf("Type mismatch for file '%s' from module '%s': type is 'd' while manifest says '%s'.", $fpath, $moduleName, $mentry['type']));
                 continue;
             }
-            if ($stat['nlink'] > 2) {
+            if ($stat['nlink'] > 2 || count(scandir($fpath)) > 2) {
                 continue;
             }
             $ret = @rmdir($fpath);
