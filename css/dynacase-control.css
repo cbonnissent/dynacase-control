@@ -1,3 +1,6 @@
+.x-form-item {
+    overflow: hidden !important;
+}
 .x-repo-setup {
     background-image: url('../images/icons/link_edit.png') !important;
 }
@@ -163,7 +166,7 @@
 
 .x-form-check-wrap, .x-form-display-field {
     padding-top: 4px;
-    height: 18px;
+    height: 100%;
 }
 
 /*

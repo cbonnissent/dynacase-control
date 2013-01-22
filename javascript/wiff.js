@@ -2071,7 +2071,7 @@ function updateContextList_success(responseObject, select) {
 														autoLoad : true
 													});
 
-											repoBoxList = new Array();
+											repoBoxList = [];
 
 											repoStore.on('load', function() {
 
@@ -2090,7 +2090,7 @@ function updateContextList_success(responseObject, select) {
 															repoBoxList.push({
 																boxLabel : record
 																		.get('description')
-																		+ '<i>('
+																		+ '<i> ('
 																		+ record
 																				.get('displayUrl')
 																		+ ')</i>'
@@ -2103,7 +2103,7 @@ function updateContextList_success(responseObject, select) {
 
 														});
 
-												var isContextRegistered = (getCurrentContext().register == 'registered') ? true : false;
+												var isContextRegistered = (getCurrentContext().register == 'registered');
 
 												panel.remove(panel.registrationCheckbox);
 												panel.registrationCheckbox = new Ext.form.Checkbox({
@@ -2113,7 +2113,7 @@ function updateContextList_success(responseObject, select) {
 													columns : 1,
 													boxLabel: (registrationClient.ctx.status == 'registered') ? 'Register this context with your EEC account?' : 'You cannot register this context because your dynacase-control is not registered with your EEC account...',
 													checked : (registrationClient.ctx.status == 'registered') ? isContextRegistered : false,
-													disabled : (registrationClient.ctx.status == 'registered') ? false : true
+													disabled : (registrationClient.ctx.status != 'registered')
 												});
 												panel.add(panel.registrationCheckbox);
 
