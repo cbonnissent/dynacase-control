@@ -1426,7 +1426,9 @@ public function archiveContext($archiveName, $archiveDesc = '', $vaultExclude = 
             unlink($status_file);
             return false;
         }
-        
+        /**
+         * @var DOMElement $context
+         */
         $context = $doc->importNode($contextList->item(0) , true); // Node must be imported from contexts document.
         if ($context->hasAttribute('register')) {
             // Remove register status on archived contexts
@@ -1476,7 +1478,7 @@ public function archiveContext($archiveName, $archiveDesc = '', $vaultExclude = 
         if (count($tarExcludeList) > 0) {
             $tarExcludeOpts = join(' ', $tarExcludeList);
         }
-        error_log(__METHOD__ . " " . sprintf("tarExcludeOpts = [%s]", $tarExcludeOpts));
+        //error_log(__METHOD__ . " " . sprintf("tarExcludeOpts = [%s]", $tarExcludeOpts));
         // --- Generate context tar.gz --- //
         $script = sprintf("tar -C %s -czf %s/context.tar.gz %s .", escapeshellarg($this->root) , escapeshellarg($tmp) , $tarExcludeOpts);
         $result = system($script, $retval);
@@ -1507,16 +1509,35 @@ public function archiveContext($archiveName, $archiveDesc = '', $vaultExclude = 
         
         $dump = $tmp . DIRECTORY_SEPARATOR . 'core_db.pg_dump.gz';
         
-        $script = sprintf("PGSERVICE=%s pg_dump > %s --compress=9 --no-owner", escapeshellarg($pgservice_core) , escapeshellarg($dump));
-        $result = system($script, $retval);
-        
-        if ($retval != 0) {
-            $this->errorMessage = "Error when making database dump :: " . $result;
+        $errorFile = WiffLibSystem::tempnam(null, 'WIFF_error.tmp');
+        if ($errorFile === false) {
+            error_log(__FUNCTION__ . " " . sprintf("Error creating temporary file."));
+            $this->errorMessage = "Error creating temporary file for error.";
             if (file_exists("$tmp/context.tar.gz")) {
                 unlink("$tmp/context.tar.gz");
             }
             if (file_exists("$dump")) {
                 unlink("$dump");
+            }
+            $zip->close();
+            $this->writeArchiveError($archiveId, $archived_root);
+            unlink($status_file);
+            return false;
+        }
+        
+        $script = sprintf("PGSERVICE=%s pg_dump --compress=9 --no-owner 1>%s 2>%s", escapeshellarg($pgservice_core) , escapeshellarg($dump) , escapeshellarg($errorFile));
+        $result = system($script, $retval);
+        
+        if ($retval != 0) {
+            $this->errorMessage = "Error when making database dump :: " . file_get_contents($errorFile);
+            if (file_exists("$tmp/context.tar.gz")) {
+                unlink("$tmp/context.tar.gz");
+            }
+            if (file_exists("$dump")) {
+                unlink("$dump");
+            }
+            if (file_exists("$errorFile")) {
+                unlink("$errorFile");
             }
             $zip->close();
             $this->writeArchiveError($archiveId, $archived_root);
@@ -1646,17 +1667,15 @@ public function archiveContext($archiveName, $archiveDesc = '', $vaultExclude = 
             if (file_exists("$dump")) {
                 unlink("$dump");
             }
-            if (empty($vaultDirList) === false) {
+            if (isset($vaultDirList) && empty($vaultDirList) === false && is_array($vaultDirList)) {
                 /*--- Delete vault list --- */
-                $i = 0;
-                while ($vaultDirList[$i]) {
-                    if (file_exists($tmp . "/vault_" . $vaultDirList[$i]["id_fs"] . ".tar.gz")) {
-                        unlink($tmp . "/vault_" . $vaultDirList[$i]["id_fs"] . ".tar.gz");
+                foreach ($vaultDirList as $index => $value) {
+                    if (file_exists($tmp . "/vault_" . $value["id_fs"] . ".tar.gz")) {
+                        unlink($tmp . "/vault_" . $value["id_fs"] . ".tar.gz");
                     }
-                    $i++;
                 }
             }
-            if (file_exists($tmp . "/vault_$id_fs.tar.gz")) {
+            if (isset($id_fs) && file_exists($tmp . "/vault_$id_fs.tar.gz")) {
                 unlink($tmp . "/vault_$id_fs.tar.gz");
             }
             $this->errorMessage = sprintf("Could not add 'info.xml' to archive: %s", $zip->getStatusString());
@@ -1678,17 +1697,15 @@ public function archiveContext($archiveName, $archiveDesc = '', $vaultExclude = 
             if (file_exists("$dump")) {
                 unlink("$dump");
             }
-            if (empty($vaultDirList) === false) {
+            if (isset($vaultDirList) && empty($vaultDirList) === false && is_array($vaultDirList)) {
                 /*--- Delete vault list --- */
-                $i = 0;
-                while ($vaultDirList[$i]) {
-                    if (file_exists($tmp . "/vault_" . $vaultDirList[$i]["id_fs"] . ".tar.gz")) {
-                        unlink($tmp . "/vault_" . $vaultDirList[$i]["id_fs"] . ".tar.gz");
+                foreach ($vaultDirList as $index => $value) {
+                    if (file_exists($tmp . "/vault_" . $value["id_fs"] . ".tar.gz")) {
+                        unlink($tmp . "/vault_" . $value["id_fs"] . ".tar.gz");
                     }
-                    $i++;
                 }
             }
-            if (file_exists($tmp . "/vault_$id_fs.tar.gz")) {
+            if (isset($id_fs) && file_exists($tmp . "/vault_$id_fs.tar.gz")) {
                 unlink($tmp . "/vault_$id_fs.tar.gz");
             }
             $this->writeArchiveError($archiveId, $archived_root);
@@ -1703,14 +1720,12 @@ public function archiveContext($archiveName, $archiveDesc = '', $vaultExclude = 
         if (file_exists("$dump")) {
             unlink("$dump");
         }
-        if (empty($vaultDirList) === false) {
+        if (isset($vaultDirList) && empty($vaultDirList) === false && is_array($vaultDirList)) {
             /*--- Delete vault list --- */
-            $i = 0;
-            while ($vaultDirList[$i]) {
-                if (file_exists($tmp . "/vault_" . $vaultDirList[$i]["id_fs"] . ".tar.gz")) {
-                    unlink($tmp . "/vault_" . $vaultDirList[$i]["id_fs"] . ".tar.gz");
+            foreach ($vaultDirList as $index => $value) {
+                if (file_exists($tmp . "/vault_" . $value["id_fs"] . ".tar.gz")) {
+                    unlink($tmp . "/vault_" . $value["id_fs"] . ".tar.gz");
                 }
-                $i++;
             }
         }
         
@@ -2060,13 +2075,13 @@ public function delete(&$res, $opt = false)
             error_log(__CLASS__ . "::" . __FUNCTION__ . " " . sprintf("deleteContextDatabaseContent returned with warning: %s", $err));
         }
         /*
-            if( $ret ) {
-                $err_msg .= $ret;
-                error_log(__CLASS__."::".__FUNCTION__." ".sprintf("deleteContextDatabaseContent returned with error: %s", $this->errorMessage));
-            }
-            if ($err != '') {
-                $err_msg .= $$err;
-            }
+                if( $ret ) {
+                    $err_msg .= $ret;
+                    error_log(__CLASS__."::".__FUNCTION__." ".sprintf("deleteContextDatabaseContent returned with error: %s", $this->errorMessage));
+                }
+                if ($err != '') {
+                    $err_msg .= $$err;
+                }
         */
         error_log("database deleted");
     }
