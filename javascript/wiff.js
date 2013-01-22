@@ -2290,7 +2290,7 @@ function updateContextList_success(responseObject, select) {
 						var registerHtml = (this.context.register == 'registered') ?
 								'<img src="images/icons/tag_green.png" style="vertical-align: middle;" />&nbsp;<span style="">Registered</span> (&nbsp;<a href="javascript:registrationClient.showConfiguration(currentContext)">Show configuration</a>&nbsp;|&nbsp;<a href="javascript:forceSendContextConfiguration();">Send configuration</a>&nbsp;)'
 								:
-								'<img src="images/icons/stop.png" style="vertical-align: middle;" />&nbsp;<span style="">Unregistered</span>';
+								'<img src="images/icons/stop.png" style="vertical-align: middle;" />&nbsp;<span style="">Unregistered</span>(&nbsp;<a href="javascript:registrationClient.showConfiguration(currentContext)">Show configuration</a>&nbsp;)';
 
 						var needRepoValidationList = new Array();
 						var lenghtRepo = 0;
