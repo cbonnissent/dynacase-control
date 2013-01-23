@@ -3608,6 +3608,12 @@ function getLicenseAgreement_failure(module, operation, responseObject) {
 }
 
 function storeLicenseAgreement(module, operation, agree) {
+    mask = new Ext.LoadMask(Ext.getBody(), {
+        msg : 'Saving...'
+    });
+    mask.show();
+    Ext.getCmp('license-formpanel').disable();
+
 	Ext.Ajax.request({
 				'url' : 'wiff.php',
 				'params' : {
@@ -3618,10 +3624,12 @@ function storeLicenseAgreement(module, operation, agree) {
 					'agree' : agree
 				},
 				'success' : function(responseObject) {
+                    mask.hide();
 					storeLicenseAgreement_success(module, operation,
 							responseObject);
 				},
 				'failure' : function(responseObject) {
+                    mask.hide();
 					storeLicenseAgreement_failure(module, operation,
 							responseObject);
 				}
