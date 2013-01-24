@@ -3,7 +3,7 @@
  * @author Anakeen
  * @license http://www.fsf.org/licensing/licenses/agpl-3.0.html GNU Affero General Public License
  * @package FDL
- */
+*/
 /**
  * Wcontrol library
  * @author Anakeen
@@ -329,7 +329,7 @@ function wcontrol_check_phpclass($process)
 {
     $include = $process->getAttribute('include');
     if ($include != "") {
-        $ret = @include ($include);
+        $ret = @include_once ($include);
         if ($ret == false) {
             return false;
         }
