@@ -3,7 +3,7 @@
  * @author Anakeen
  * @license http://www.fsf.org/licensing/licenses/agpl-3.0.html GNU Affero General Public License
  * @package FDL
- */
+*/
 /**
  * Web Installer for Freedom
  * XHR PHP Portal
@@ -434,7 +434,9 @@ if (isset($_REQUEST['archiveContext'])) {
     $context = $wiff->getContext($_REQUEST['name']);
     
     if (!$wiff->errorMessage) {
-        $archiveId = $context->archiveContext($_REQUEST['archiveName'], $_REQUEST['archiveDesc'], $_REQUEST['vaultExclude']);
+        $archiveDesc = isset($_REQUEST['archiveDesc']) ? $_REQUEST['archiveDesc'] : "";
+        $vaultExclude = isset($_REQUEST['vaultExclude']) ? $_REQUEST['vaultExclude'] : "";
+        $archiveId = $context->archiveContext($_REQUEST['archiveName'], $archiveDesc, $vaultExclude);
         if ($archiveId === false) {
             answer(null, $context->errorMessage);
         } else {

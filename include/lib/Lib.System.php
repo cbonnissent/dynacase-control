@@ -3,7 +3,7 @@
  * @author Anakeen
  * @license http://www.fsf.org/licensing/licenses/agpl-3.0.html GNU Affero General Public License
  * @package FDL
- */
+*/
 /**
  * WiffLibSystem class
  *
@@ -16,7 +16,7 @@
 class WiffLibSystem
 {
     
-    function getCommandPath($cmdname)
+    static function getCommandPath($cmdname)
     {
         $path_env = getenv("PATH");
         if ($path_env == false) {
@@ -45,12 +45,12 @@ class WiffLibSystem
         return false;
     }
     
-    function getHostName()
+    static function getHostName()
     {
         return php_uname('n');
     }
     
-    function getHostIPAddress($hostname = "")
+    static function getHostIPAddress($hostname = "")
     {
         if ($hostname == false) {
             $hostname = WiffLibSystem::getHostName();
@@ -62,17 +62,17 @@ class WiffLibSystem
         return $ip;
     }
     
-    function getServerName()
+    static function getServerName()
     {
         return getenv("SERVER_NAME");
     }
     
-    function getServerAddr()
+    static function getServerAddr()
     {
         return getenv("SERVER_ADDR");
     }
     
-    function runningInHttpd()
+    static function runningInHttpd()
     {
         return WiffLibSystem::getServerAddr();
     }
@@ -82,7 +82,7 @@ class WiffLibSystem
      * @param array|null $opt
      * @return int
      */
-    function ssystem($args, $opt = null)
+    static function ssystem($args, $opt = null)
     {
         $pid = pcntl_fork();
         if ($pid == - 1) {
@@ -112,7 +112,7 @@ class WiffLibSystem
         pcntl_exec($cmd, $args, $envs);
     }
     
-    function getAbsolutePath($path)
+    static function getAbsolutePath($path)
     {
         if (is_link($path)) {
             $path = readlink($path);
@@ -120,7 +120,7 @@ class WiffLibSystem
         return realpath($path);
     }
     
-    function tempnam($dir, $prefix)
+    static function tempnam($dir, $prefix)
     {
         if ($dir === null || $dir === false) {
             $dir = null;
