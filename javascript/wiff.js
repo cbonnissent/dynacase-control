@@ -3005,7 +3005,7 @@ function show_and_download_dependencies(action, responseObject) {
         if (toDownload[i].needphase == 'replaced') {
             op = '<span style="color: #900; font-family: monospace">r</span>';
             comment = '(replaced by ' + ((toDownload[i].replacedBy) ? toDownload[i].replacedBy : 'unknown') + ')';
-        } else if (toDownload[i].needphase == 'upgrade') {
+        } else if (toDownload[i].needphase == 'upgrade' || (!toDownload[i].needphase && action == 'upgrade')) {
             op = '<span style="color: #990; font-family: monospace">u</span>';
         }
         var error = "";
@@ -3655,8 +3655,8 @@ function getPhaseList(module, operation) {
 
 	currentModule = module;
 
-	localOperation = operation;
-	if (currentModule.needphase == 'upgrade') {
+    localOperation = currentModule.needphase ? currentModule.needphase : operation;
+	/*if (currentModule.needphase == 'upgrade') {
 		// This module replaces other modules
 		// so, we force the operation to 'upgrade'
 		localOperation = 'upgrade';
@@ -3665,7 +3665,7 @@ function getPhaseList(module, operation) {
 		// This module is replaced by another module
 		// so, we mark it for replacement
 		localOperation = 'replaced';
-	}
+	}*/
 
 	Ext.Ajax.request({
 				url : 'wiff.php',
