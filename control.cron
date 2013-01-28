@@ -1,0 +1,2 @@
+# Every days
+43 5 * * * [ -f "$WIFF_ROOT"/wiff ] && cd "$WIFF_ROOT" && ./wiff send_configuration > /dev/null

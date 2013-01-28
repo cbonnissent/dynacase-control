@@ -1,0 +1,31 @@
+#!/usr/bin/env php
+<?php
+
+set_include_path(get_include_path().PATH_SEPARATOR.getcwd().DIRECTORY_SEPARATOR.'include');
+
+putenv('WIFF_ROOT='.getcwd());
+
+require_once ('class/Class.WIFF.php');
+
+function __autoload($class_name) {
+  require_once 'class/Class.'.$class_name.'.php';
+}
+
+$wiff = WIFF::getInstance();
+if( $wiff === false ) {
+  error_log(sprintf("%s", $wiff->errorMessage));
+  exit(1);
+}
+
+$param = $wiff->getParam('auto-configuration-sender-interval');
+if( $param === false ) {
+  $ret = $wiff->setParam('auto-configuration-sender-interval', '30');;
+  if( $ret === false ) {
+    error_log(sprintf("%s", $wiff->errorMessage));
+    exit(2);
+  }
+}
+
+exit(0);
+
+?>

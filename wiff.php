@@ -226,6 +226,19 @@ if (isset($_REQUEST['createPasswordFile']) && isset($_REQUEST['login']) && isset
         answer(null, $wiff->errorMessage);
     }
 }
+
+if (isset($_REQUEST['registerCrontab'])) {
+    $crontab = new Crontab();
+    $ret = true;
+    if (!$crontab->isAlreadyRegister("control.cron")) {
+        $ret = $crontab->registerFile("control.cron");
+    }
+    if (!$ret) {
+        answer(null, $crontab->getErrors());
+    } else {
+        answer(true);
+    }
+}
 // Request to get a wiff parameter value
 if (isset($_REQUEST['getParam'])) {
     $value = $wiff->getParam($_REQUEST['paramName']);
@@ -279,7 +292,7 @@ if (isset($_REQUEST['setParam'])) {
     }
 }
 // Request to import a web installer archive to a given context
-if (isset($_REQUEST['importArchive'])) {
+if (isset($_REQUEST['importArchive']) && isset($context)) {
     //answer(null,basename( $_FILES['module']['tmp_name']));
     $moduleFile = $context->uploadModule();
     if (!$context->errorMessage) {
@@ -1074,6 +1087,7 @@ if (isset($_REQUEST['getConfiguration']) && isset($_REQUEST['context'])) {
 }
 // Call to get a param value
 if (isset($argv)) {
+    $paramName = "";
     if (stripos($argv[1], '--getValue=') === 0) {
         $paramName = substr($argv[1], 11);
     }
@@ -1082,7 +1096,9 @@ if (isset($argv)) {
     $xml->load($wiff->contexts_filepath);
     
     $xpath = new DOMXPath($xml);
-    
+    /**
+     * @var DOMElement $parameterNode
+     */
     $parameterNode = $xpath->query(sprintf("/contexts/context[@name='%s']/parameters-value/param[@name='%s']", getenv('WIFF_CONTEXT_NAME') , $paramName))->item(0);
     if ($parameterNode) {
         $parameterValue = $parameterNode->getAttribute('value');
