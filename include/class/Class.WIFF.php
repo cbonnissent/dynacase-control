@@ -244,7 +244,7 @@ class WIFF
         $array = explode(".", $v);
         $lastIndex = count($array) - 1;
         $lastPart = $array[$lastIndex];
-        if (PHP_INT_MAX < $lastPart) {
+        if (pow(2, 32) < $lastPart) {
             $dateTime = str_split($lastPart, 8);
             $array[$lastIndex] = $dateTime[0];
             $array[] = $dateTime[1];
