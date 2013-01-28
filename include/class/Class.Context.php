@@ -536,15 +536,16 @@ class Context
     }
     /**
      * Compare (str_v1, str_r1, str_v2, str_r2) versions/releases
-     * @return < 0 if v1-r1 is less than v2-r2, > 0 if v1-r1 is greater than v2-r2
-     *         and 0 if they are equal
-     * @param string version #1
-     * @param string release #1
-     * @param string version #2
-     * @param string release #2
+     * @return int|bool < 0 if v1-r1 is less than v2-r2, > 0 if v1-r1 is greater than v2-r2
+     * @param string $v1 version #1
+     * @param string $r1 release #1
+     * @param string $v2 version #2
+     * @param string $r2 release #2
      */
     public function cmpVersionReleaseAsc($v1, $r1, $v2, $r2)
     {
+        $r1 = WIFF::explodeVersion($r1);
+        $r2 = WIFF::explodeVersion($r2);
         return version_compare("$v1-$r1", "$v2-$r2");
     }
     /**
