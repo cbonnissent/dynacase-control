@@ -42,6 +42,24 @@ availableStore = {};
 authInfo = [];
 
 // Dynacase Control functions
+/**
+ * Crontab of control
+ */
+function registerCrontab() {
+    Ext.Ajax.request({
+        url : 'wiff.php',
+        params : {
+            registerCrontab : true
+        },
+        success : function(responseObject) {
+            var response = eval('(' + responseObject.responseText + ')');
+            if (response.error) {
+                Ext.Msg.alert('Server Error', response.error);
+            }
+        }
+
+    });
+}
 // Password File Test
 function checkPasswordFile() {
 	Ext.Ajax.request({
@@ -4378,6 +4396,7 @@ Ext.onReady(function() {
 	Ext.Ajax.timeout = 3600000;
 
 	checkPasswordFile();
+    registerCrontab();
 
 	lock = new spinlock({
 		timeout : 1000,

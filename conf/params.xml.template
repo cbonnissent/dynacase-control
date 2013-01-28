@@ -16,6 +16,7 @@
     <param name="proxy-port" value="" />
     <param name="proxy-username" value="" />
     <param name="proxy-password" value="" />
+    <param name="auto-configuration-sender-interval" value="30" />
   </parameters>
   
 </wiff>

@@ -60,6 +60,12 @@ case 'delete':
   $cmd = array_shift($argv);
   $ret = wiff_delete($argv);
   break;
+case 'crontab':
+  $cmd = array_shift($argv);
+  $ret = wiff_crontab($argv);
+case 'send_configuration':
+  $ret = wiff_send_configuration();
+  break;
 default:
   $ret = wiff_default($argv);
   break;

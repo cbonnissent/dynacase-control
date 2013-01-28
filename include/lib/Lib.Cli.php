@@ -3,7 +3,7 @@
  * @author Anakeen
  * @license http://www.fsf.org/licensing/licenses/agpl-3.0.html GNU Affero General Public License
  * @package FDL
- */
+*/
 /**
  * CLI Library
  * @author Anakeen
@@ -35,6 +35,10 @@ function wiff_help(&$argv)
     echo "  wiff wstart <context-name>\n";
     echo "\n";
     echo "  wiff delete context <context-name>\n";
+    echo "\n";
+    echo "  wiff crontab help\n";
+    echo "\n";
+    echo "  wiff send_configuration\n";
     echo "\n";
     return 0;
 }
@@ -84,7 +88,6 @@ function wiff_list(&$argv)
             error_log(sprintf("Unknown operation '%s'!\n", $op));
             return wiff_list_help($argv);
     }
-    return 0;
 }
 /**
  * wiff list context
@@ -183,8 +186,6 @@ function wiff_context(&$argv)
             error_log(sprintf("Unknown operation '%s'!\n", $op));
             return wiff_context_help($context, $argv);
     }
-    
-    return 0;
 }
 /**
  * wiff context help
@@ -316,7 +317,7 @@ function wiff_context_shell(&$context, &$argv)
             return 1;
         }
     }
-    
+    /** @noinspection PhpVoidFunctionResultUsedInspection Because it return false on error and void on success */
     $ret = pcntl_exec($shell, $argv, $envs);
     if ($ret === false) {
         error_log(sprintf("Error: exec error for '%s'\n", join(" ", array(
@@ -325,6 +326,7 @@ function wiff_context_shell(&$context, &$argv)
         ))));
         exit(1);
     }
+    return 0;
 }
 /**
  * wiff context <ctxName> module
@@ -408,11 +410,9 @@ function wiff_context_module_install(&$context, &$argv)
     } else {
         return wiff_context_module_install_remote($context, $options, $modName, $argv);
     }
-    
-    return 0;
 }
 
-function wiff_context_module_install_local(&$context, &$options, &$pkgName, &$argv)
+function wiff_context_module_install_local(Context & $context, &$options, &$pkgName, &$argv)
 {
     require_once ('lib/Lib.System.php');
     require_once ('class/Class.Module.php');
@@ -483,7 +483,7 @@ function wiff_context_module_install_local(&$context, &$options, &$pkgName, &$ar
     return wiff_context_module_install_deplist($context, $options, $argv, $depList);
 }
 
-function wiff_context_module_install_remote(&$context, &$options, &$modName, &$argv)
+function wiff_context_module_install_remote(Context & $context, &$options, &$modName, &$argv)
 {
     require_once ('lib/Lib.System.php');
     
@@ -531,10 +531,13 @@ function wiff_context_module_install_remote(&$context, &$options, &$modName, &$a
     return wiff_context_module_install_deplist($context, $options, $argv, $depList);
 }
 
-function wiff_context_module_install_deplist(&$context, &$options, &$argv, &$depList, $type = 'install')
+function wiff_context_module_install_deplist(Context & $context, &$options, &$argv, &$depList, $type = 'install')
 {
     $downloaded = array();
     foreach ($depList as $module) {
+        /**
+         * @var Module $module
+         */
         if ($module->needphase != '') {
             if ($module->needphase == 'replaced') {
                 $type = 'unregister';
@@ -634,6 +637,9 @@ function wiff_context_module_install_deplist(&$context, &$options, &$argv, &$dep
             }
             
             foreach ($paramList as $param) {
+                /**
+                 * @var Parameter $param
+                 */
                 $visibility = $param->getVisibility($type);
                 if ($visibility != 'W') {
                     continue;
@@ -736,7 +742,9 @@ function wiff_context_module_install_deplist(&$context, &$options, &$argv, &$dep
                     $processList = $phase->getProcessList();
                     
                     foreach ($processList as $process) {
-                        
+                        /**
+                         * @var Process $process
+                         */
                         while (true) {
                             echo sprintf("Running '%s'... ", $process->label);
                             echo fg_yellow();
@@ -822,11 +830,9 @@ function wiff_context_module_upgrade(&$context, &$argv)
     } else {
         return wiff_context_module_upgrade_remote($context, $options, $modName, $argv);
     }
-    
-    return 0;
 }
 
-function wiff_context_module_upgrade_local(&$context, &$options, &$pkgName, &$argv)
+function wiff_context_module_upgrade_local(Context & $context, &$options, &$pkgName, &$argv)
 {
     require_once ('lib/Lib.System.php');
     
@@ -899,7 +905,7 @@ function wiff_context_module_upgrade_local(&$context, &$options, &$pkgName, &$ar
     return wiff_context_module_install_deplist($context, $options, $argv, $depList, 'upgrade');
 }
 
-function wiff_context_module_upgrade_remote(&$context, &$options, &$modName, &$argv)
+function wiff_context_module_upgrade_remote(Context & $context, &$options, &$modName, &$argv)
 {
     require_once ('lib/Lib.System.php');
     
@@ -991,8 +997,6 @@ function wiff_context_module_list(&$context, &$argv)
         default:
             return wiff_context_module_list_help($context, $argv);
     }
-    
-    return 0;
 }
 
 function wiff_context_module_list_help(&$context, &$argv)
@@ -1006,7 +1010,7 @@ function wiff_context_module_list_help(&$context, &$argv)
     return 0;
 }
 
-function wiff_context_module_list_upgrade(&$context, &$argv)
+function wiff_context_module_list_upgrade(Context & $context, &$argv)
 {
     $options = parse_argv_options($argv);
     
@@ -1040,7 +1044,7 @@ function wiff_context_module_list_upgrade(&$context, &$argv)
     return 0;
 }
 
-function wiff_context_module_list_installed(&$context, &$argv)
+function wiff_context_module_list_installed(Context & $context, &$argv)
 {
     $options = parse_argv_options($argv);
     
@@ -1070,7 +1074,7 @@ function wiff_context_module_list_installed(&$context, &$argv)
     return 0;
 }
 
-function wiff_context_module_list_available(&$context, &$argv)
+function wiff_context_module_list_available(Context & $context, &$argv)
 {
     $options = parse_argv_options($argv);
     
@@ -1130,8 +1134,6 @@ function wiff_context_param(&$context, &$argv)
             return wiff_context_param_help($context, $argv);
             break;
     }
-    
-    return 0;
 }
 
 function wiff_context_param_help(&$context, &$argv)
@@ -1147,7 +1149,7 @@ function wiff_context_param_help(&$context, &$argv)
     return 0;
 }
 
-function wiff_context_param_show(&$context, &$argv)
+function wiff_context_param_show(Context & $context, &$argv)
 {
     $showList = array();
     
@@ -1164,6 +1166,9 @@ function wiff_context_param_show(&$context, &$argv)
     }
     
     foreach ($showList as $module) {
+        /**
+         * @var Module $module
+         */
         $paramList = $module->getParameterList();
         if ($paramList === false) {
             continue;
@@ -1176,7 +1181,7 @@ function wiff_context_param_show(&$context, &$argv)
     return 0;
 }
 
-function wiff_context_param_get(&$context, &$argv)
+function wiff_context_param_get(Context & $context, &$argv)
 {
     $modParam = array_shift($argv);
     if ($modParam === null) {
@@ -1210,7 +1215,7 @@ function wiff_context_param_get(&$context, &$argv)
     return 0;
 }
 
-function wiff_context_param_set(&$context, &$argv)
+function wiff_context_param_set(Context & $context, &$argv)
 {
     $modParam = array_shift($argv);
     if ($modParam === null) {
@@ -1362,7 +1367,7 @@ function wiff_mkrepoidx(&$argv)
     return 0;
 }
 
-function wiff_mkrepoidx_process_info(&$parentDocument, &$parentNode, $info, $file)
+function wiff_mkrepoidx_process_info(DOMDocument & $parentDocument, DOMElement & $parentNode, $info, $file)
 {
     $infoxml = new DOMDocument();
     $ret = $infoxml->loadXML($info);
@@ -1379,7 +1384,9 @@ function wiff_mkrepoidx_process_info(&$parentDocument, &$parentNode, $info, $fil
         error_log(sprintf("Error: more than one child in XML root node!\n"));
         return FALSE;
     }
-    
+    /**
+     * @var DOMElement $node
+     */
     $node = $nodeList->item(0);
     $node->setAttribute('src', $file);
     
@@ -1721,7 +1728,6 @@ function wiff_delete(&$argv)
             error_log(sprintf("Unknown operation '%s'!\n", $op));
             return wiff_delete_help($argv);
     }
-    return 0;
 }
 
 function wiff_delete_help(&$argv)
@@ -1750,5 +1756,100 @@ function wiff_delete_context(&$argv)
         return 1;
     }
     
+    return 0;
+}
+
+function wiff_crontab_help()
+{
+    echo "\n";
+    echo "Usage\n";
+    echo "-----\n";
+    echo "\n";
+    echo "  wiff crontab cmd <register|unregister> file <path/to/cronfile> [user=<uid>]\n";
+    echo "  wiff crontab cmd list [user=<uid>]\n";
+    echo "\n";
+    return 0;
+}
+
+function wiff_crontab(&$argv)
+{
+    include_once "include/class/Class.Crontab.php";
+    
+    $cmd = "";
+    $file = "";
+    $user = null;
+    while ($op = array_shift($argv)) {
+        switch ($op) {
+            case 'cmd':
+                $cmd = array_shift($argv);
+                break;
+
+            case 'file':
+                $file = array_shift($argv);
+                break;
+
+            case 'user':
+                $user = array_shift($argv);
+                break;
+
+            case 'help':
+                return wiff_crontab_help();
+                break;
+
+            default:
+                error_log(sprintf("Unknown operation '%s'!\n", $op));
+                return wiff_crontab_help();
+        }
+    }
+    switch ($cmd) {
+        case 'list':
+            $crontab = new Crontab($user);
+            $ret = $crontab->listAll();
+            return !$ret;
+            break;
+
+        case 'register':
+            if (!$file) {
+                error_log("Error: missing file argument");
+                wiff_crontab_help();
+                return 1;
+            }
+            $crontab = new Crontab($user);
+            $ret = $crontab->registerFile($file);
+            return !$ret;
+            break;
+
+        case 'unregister':
+            if ($file === NULL) {
+                error_log("Error: missing file argument");
+                wiff_crontab_help();
+                return 1;
+            }
+            $crontab = new Crontab($user);
+            $ret = $crontab->unregisterFile($file);
+            return !$ret;
+            break;
+
+        default:
+            return wiff_crontab_help();
+    }
+}
+
+function wiff_send_configuration()
+{
+    $wiff = WIFF::getInstance();
+    $diff = $wiff->getParam("auto-configuration-sender-interval");
+    if (!$diff) return 0;
+    $date = getdate();
+    if (($date["yday"] % $diff) != 0) {
+        return 0;
+    }
+    $contextList = $wiff->getContextList();
+    foreach ($contextList as $context) {
+        /**
+         * @var Context $context
+         */
+        $context->sendConfiguration();
+    }
     return 0;
 }

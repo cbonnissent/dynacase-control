@@ -575,7 +575,7 @@ class Context
     }
     /**
      * Get Module by name
-     * @return object Module or boolean false
+     * @return Module or boolean false
      * @param Module $name Module name
      * @param bool $status
      */
@@ -653,7 +653,11 @@ class Context
     {
         return $this->getModuleReplaced($name, 'installed');
     }
-    
+    /**
+     * Get module if it's in available module list
+     * @param $name
+     * @return Module
+     */
     public function getModuleAvail($name)
     {
         $modAvails = $this->getAvailableModuleList();
