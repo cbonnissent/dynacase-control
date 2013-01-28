@@ -234,7 +234,23 @@ class WIFF
      */
     private function compareVersion($v1, $v2)
     {
+        $v1 = $this->explodeVersion($v1);
+        $v2 = $this->explodeVersion($v2);
         return version_compare($v1, $v2);
+    }
+    
+    public static function explodeVersion($v)
+    {
+        $array = explode(".", $v);
+        $lastIndex = count($array) - 1;
+        $lastPart = $array[$lastIndex];
+        if (PHP_INT_MAX < $lastPart) {
+            $dateTime = str_split($lastPart, 8);
+            $array[$lastIndex] = $dateTime[0];
+            $array[] = $dateTime[1];
+            return implode(".", $array);
+        }
+        return $v;
     }
     /**
      * Check if WIFF has available update
