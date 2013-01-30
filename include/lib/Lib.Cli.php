@@ -474,7 +474,7 @@ function wiff_context_module_install_local(Context & $context, &$options, &$pkgN
             }
             echo sprintf("- %s-%s-%s %s%s\n", $module->name, $module->version, $module->release, $op, $error);
         }
-        $ret = param_ask("Proceed with installation", "Y/n", "Y");
+        $ret = param_ask($options, "Proceed with installation", "Y/n", "Y");
         if (!preg_match('/^(y|yes|)$/i', $ret)) {
             return 0;
         }
@@ -522,7 +522,7 @@ function wiff_context_module_install_remote(Context & $context, &$options, &$mod
             }
             echo sprintf("- %s-%s-%s %s%s\n", $module->name, $module->version, $module->release, $op, $error);
         }
-        $ret = param_ask("Proceed with installation", "Y/n", "Y");
+        $ret = param_ask($options, "Proceed with installation", "Y/n", "Y");
         if (!preg_match('/^(y|yes|)$/i', $ret)) {
             return 0;
         }
@@ -612,7 +612,7 @@ function wiff_context_module_install_deplist(Context & $context, &$options, &$ar
             
             $licenseAgreement = $module->getLicenseAgreement();
             if ($license != '' && $licenseAgreement != 'yes') {
-                $agree = license_ask($module->name, $module->license, $license);
+                $agree = license_ask($module->name, $module->license, $license, $options);
                 if ($agree == 'yes') {
                     $module->storeLicenseAgreement($agree);
                 } else {
@@ -650,7 +650,7 @@ function wiff_context_module_install_deplist(Context & $context, &$options, &$ar
                 if (boolopt('yes', $options)) {
                     $value = $pvalue;
                 } else {
-                    $value = param_ask($param->name, $pvalue, $pvalue);
+                    $value = param_ask($options, $param->name, $pvalue, $pvalue);
                 }
                 if ($value === false) {
                     error_log(sprintf("Error: could not read answer!"));
@@ -752,7 +752,7 @@ function wiff_context_module_install_deplist(Context & $context, &$options, &$ar
                             echo color_reset();
                             if ($exec['ret'] === false) {
                                 echo sprintf("\nError: process '%s' returned with error: %s%s%s\n", $process->label, fg_red() , $exec['output'], color_reset());
-                                $ret = param_ask("(R)etry, (c)continue or (a)bort", "R/c/a", "R");
+                                $ret = param_ask($options, "(R)etry, (c)continue or (a)bort", "R/c/a", "R", "a");
                                 if (preg_match('/^a.*$/i', $ret)) {
                                     echo sprintf("[%sABORTED%s] (%s)\n", fg_red() , color_reset() , $exec['output']);
                                     return 1;
@@ -896,7 +896,7 @@ function wiff_context_module_upgrade_local(Context & $context, &$options, &$pkgN
             }
             echo sprintf("- %s-%s-%s %s%s\n", $module->name, $module->version, $module->release, $op, $error);
         }
-        $ret = param_ask("Proceed with upgrade", "Y/n", "Y");
+        $ret = param_ask($options, "Proceed with upgrade", "Y/n", "Y");
         if (!preg_match('/^(y|yes|)$/i', $ret)) {
             return 0;
         }
@@ -954,7 +954,7 @@ function wiff_context_module_upgrade_remote(Context & $context, &$options, &$mod
             }
             echo sprintf("- %s-%s-%s %s%s\n", $module->name, $module->version, $module->release, $op, $error);
         }
-        $ret = param_ask("Proceed with upgrade", "Y/n", "Y");
+        $ret = param_ask($options, "Proceed with upgrade", "Y/n", "Y");
         if (!preg_match('/^(y|yes|)$/i', $ret)) {
             return 0;
         }
@@ -1544,9 +1544,14 @@ function boolopt($opt, &$options)
     return false;
 }
 
-function param_ask($prompt, $choice, $default)
+function param_ask($options, $prompt, $choice, $default, $unattendedDefault = false)
 {
     echo sprintf("%s ? [%s] ", $prompt, $choice);
+    if (boolopt('unattended', $options)) {
+        $ans = ($unattendedDefault !== false) ? $unattendedDefault : $default;
+        echo $ans . "\n";
+        return $ans;
+    }
     $fh = fopen('php://stdin', 'r');
     if ($fh === false) {
         return false;
@@ -1562,7 +1567,7 @@ function param_ask($prompt, $choice, $default)
     return $ans;
 }
 
-function license_ask($moduleName, $licenseName, $license)
+function license_ask($moduleName, $licenseName, $license, &$options)
 {
     $licStart = sprintf("=== License agreement for module '%s' ===\n", $moduleName);
     $licSub = sprintf("License: %s\n", $licenseName);
@@ -1587,7 +1592,7 @@ function license_ask($moduleName, $licenseName, $license)
             break;
         }
         echo "\n";
-        $ans = param_ask("--- View next page ---", "press enter to view next page", "");
+        $ans = param_ask($options, "--- View next page ---", "press enter to view next page", "", "q");
         if (preg_match("/^(q|quit|end)$/i", $ans)) {
             break;
         }
@@ -1595,7 +1600,7 @@ function license_ask($moduleName, $licenseName, $license)
     echo "\n" . $licSep . "\n";
     
     while (true) {
-        $ans = param_ask("Do you agree", "y/n", "");
+        $ans = param_ask($options, "Do you agree", "y/n", "", "y");
         if (preg_match("/^(y|yes|oui)/i", $ans)) {
             return 'yes';
         }
