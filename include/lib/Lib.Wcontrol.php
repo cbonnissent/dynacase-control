@@ -16,8 +16,9 @@ require_once ('lib/Lib.System.php');
  * @param Process $process
  * @return array
  */
-function wcontrol_eval_process($process)
+function wcontrol_eval_process(Process $process)
 {
+    $msg = "";
     if ($process->getName() == "check") {
         if (function_exists("wcontrol_check_" . $process->getAttribute('type'))) {
             $ret = false;
@@ -39,6 +40,12 @@ function wcontrol_eval_process($process)
         return wcontrol_process($process);
     } else if ($process->getName() == "download") {
         return wcontrol_download($process);
+    } else if ($process->getName() == "unpack") {
+        return wcontrol_unpack($process);
+    } else if ($process->getName() == "clean-unpack") {
+        return wcontrol_clean_unpack($process);
+    } else if ($process->getName() == "purge-unreferenced-parameters-value") {
+        return wcontrol_purge_unreferenced_parameters_value($process);
     } else if ($process->getName() == "unregister-module") {
         return wcontrol_unregister_module($process);
     }
@@ -48,12 +55,80 @@ function wcontrol_eval_process($process)
         'output' => sprintf("Unknown process with name '%s'", $process->getName())
     );
 }
+
+function wcontrol_unregister_module(Process $process)
+{
+    $moduleName = $process->phase->module->name;
+    $context = $process->phase->module->getContext();
+    $ret = $context->removeModule($moduleName);
+    if ($ret === false) {
+        return array(
+            "ret" => $ret,
+            "output" => $context->errorMessage
+        );
+    }
+    
+    $ret = $context->deleteFilesFromModule($moduleName);
+    if ($ret === false) {
+        return array(
+            "ret" => $ret,
+            "output" => $context->errorMessage
+        );
+    }
+    
+    $ret = $context->deleteManifestForModule($moduleName);
+    return array(
+        "ret" => $ret ? true : false,
+        "output" => $context->errorMessage ? $context->errorMessage : "Ok"
+    );
+}
+
+function wcontrol_purge_unreferenced_parameters_value(Process $process)
+{
+    $context = $process->phase->module->getContext();
+    
+    $ret = $context->purgeUnreferencedParametersValue();
+    
+    return array(
+        "ret" => $ret ? true : false,
+        "output" => $ret ? "Ok" : sprintf("Error purging unreferenced parameters value in context '%s': %s", $context->name, $context->errorMessage)
+    );
+}
+
+function wcontrol_unpack(Process $process)
+{
+    $module = $process->phase->module;
+    $context = $module->getContext();
+    
+    $ret = $module->unpack($context->root);
+    
+    return array(
+        'ret' => $ret ? true : false,
+        'output' => $module->errorMessage ? $module->errorMessage : "Ok"
+    );
+}
+
+function wcontrol_clean_unpack(Process $process)
+{
+    $module = $process->phase->module;
+    $context = $module->getContext();
+    
+    $ret = $context->deleteFilesFromModule($module->name);
+    if ($ret === false) {
+        return array(
+            "ret" => $ret,
+            "output" => $context->errorMessage
+        );
+    }
+    
+    return wcontrol_unpack($process);
+}
 /**
  * Execute Process
  * @return array
  * @param Process $process
  */
-function wcontrol_process($process)
+function wcontrol_process(Process $process)
 {
     
     require_once ('lib/Lib.System.php');
@@ -79,10 +154,10 @@ function wcontrol_process($process)
         $cmd = sprintf("%s/%s", escapeshellarg($ctx_root) , $cmd);
     }
     
-    $cmd = $process->phase->module->context->expandParamsValues($cmd);
+    $cmd = $process->phase->module->getContext()->expandParamsValues($cmd);
     
     $current_version = false;
-    $installedModule = $process->phase->module->context->getModuleInstalled($process->phase->module->name);
+    $installedModule = $process->phase->module->getContext()->getModuleInstalled($process->phase->module->name);
     if ($installedModule !== false) {
         $current_version = $installedModule->version;
     }
@@ -153,7 +228,7 @@ function wcontrol_process($process)
     );
 }
 
-function wcontrol_download(&$process)
+function wcontrol_download(Process & $process)
 {
     require_once ('class/Class.WIFF.php');
     require_once ('class/Class.Process.php');
@@ -161,7 +236,7 @@ function wcontrol_download(&$process)
     $wiff = WIFF::getInstance();
     
     $href = $process->getAttribute('href');
-    $href = $process->phase->module->context->expandParamsValues($href);
+    $href = $process->phase->module->getContext()->expandParamsValues($href);
     $action = $process->getAttribute('action');
     
     $localFile = $wiff->downloadUrl($href);
@@ -211,7 +286,7 @@ function wcontrol_check_phpfunction($process)
     return function_exists($process->getAttribute('function'));
 }
 
-function wcontrol_msg_phpfunction($process)
+function wcontrol_msg_phpfunction(Process $process)
 {
     return sprintf("Checking if the PHP function '%s' exists", $process->getAttribute('function'));
 }
@@ -224,12 +299,12 @@ function wcontrol_msg_phpfunction($process)
 function wcontrol_check_exec($process)
 {
     $cmd = $process->getAttribute('cmd');
-    $cmd = $process->phase->module->context->expandParamsValues($cmd);
+    $cmd = $process->phase->module->getContext()->expandParamsValues($cmd);
     system($cmd, $ret);
     return ($ret === 0) ? true : false;
 }
 
-function wcontrol_msg_exec($process)
+function wcontrol_msg_exec(Process $process)
 {
     return sprintf("Checking if the command '%s' returns a success exit code", $process->getAttribute('cmd'));
 }
@@ -291,7 +366,7 @@ function wcontrol_check_file($process)
     }
 }
 
-function wcontrol_msg_file($process)
+function wcontrol_msg_file(Process $process)
 {
     return sprintf("Checking if the file '%s' validate the predicate '%s'", $process->getAttribute('file') , $process->getAttribute('predicate'));
 }
@@ -301,7 +376,7 @@ function wcontrol_msg_file($process)
  * @return bool
  */
 
-function wcontrol_check_syscommand($process)
+function wcontrol_check_syscommand(Process $process)
 {
     $ret = WiffLibSystem::getCommandPath($process->getAttribute('command'));
     if ($ret === false) {
@@ -310,7 +385,7 @@ function wcontrol_check_syscommand($process)
     return true;
 }
 
-function wcontrol_msg_syscommand($process)
+function wcontrol_msg_syscommand(Process $process)
 {
     return sprintf("Checking if the command '%s' is in the PATH", $process->getAttribute('command'));
 }
@@ -320,12 +395,12 @@ function wcontrol_msg_syscommand($process)
  * @return bool
  */
 
-function wcontrol_check_pearmodule($process)
+function wcontrol_check_pearmodule(Process $process)
 {
     return wcontrol_check_phpclass($process);
 }
 
-function wcontrol_check_phpclass($process)
+function wcontrol_check_phpclass(Process $process)
 {
     $include = $process->getAttribute('include');
     if ($include != "") {
@@ -340,12 +415,12 @@ function wcontrol_check_phpclass($process)
     return true;
 }
 
-function wcontrol_msg_pearmodule($process)
+function wcontrol_msg_pearmodule(Process $process)
 {
     return wcontrol_msg_phpclass($process);
 }
 
-function wcontrol_msg_phpclass($process)
+function wcontrol_msg_phpclass(Process $process)
 {
     return sprintf("Checking if the class '%s' is available in include file '%s'", $process->getAttribute('class') , $process->getAttribute('include'));
 }
@@ -355,7 +430,7 @@ function wcontrol_msg_phpclass($process)
  * @return bool
  */
 
-function wcontrol_check_apachemodule($process)
+function wcontrol_check_apachemodule(Process $process)
 {
     if (!function_exists('apache_get_modules')) {
         return true;
@@ -367,7 +442,7 @@ function wcontrol_check_apachemodule($process)
     return false;
 }
 
-function wcontrol_msg_apachemodule($process)
+function wcontrol_msg_apachemodule(Process $process)
 {
     return sprintf("Checking if the Apache module '%s' is loaded", $process->getAttribute('module'));
 }
@@ -377,7 +452,7 @@ function wcontrol_msg_apachemodule($process)
  * @return bool
  */
 
-function wcontrol_check_pgversion(&$process)
+function wcontrol_check_pgversion(Process & $process)
 {
     
     if (!function_exists('pg_connect')) {
@@ -421,6 +496,8 @@ function wcontrol_check_pgversion(&$process)
     $verstr_server = join("", array_map(create_function('$v', 'return sprintf("%03d", $v);') , preg_split("/\./", $row[0])));
     $verstr_target = join("", array_map(create_function('$v', 'return sprintf("%03d", $v);') , preg_split("/\./", $version)));
     
+    $return = true;
+    $op = "";
     switch ($predicate) {
         case 'eq':
             $op = "equal to";
@@ -471,7 +548,7 @@ function wcontrol_check_pgversion(&$process)
     return true;
 }
 
-function wcontrol_msg_pgversion($process)
+function wcontrol_msg_pgversion(Process $process)
 {
     if ($process->errorMessage) {
         return $process->errorMessage;
@@ -485,12 +562,14 @@ function wcontrol_msg_pgversion($process)
  * @return bool
  */
 
-function wcontrol_check_phpversion(&$process)
+function wcontrol_check_phpversion(Process & $process)
 {
     
     $predicate = $process->getAttribute('predicate');
     $version = $process->getAttribute('version');
     
+    $return = true;
+    $op = "";
     switch ($predicate) {
         case 'eq':
             $op = "equal to";
@@ -531,7 +610,7 @@ function wcontrol_check_phpversion(&$process)
     return true;
 }
 
-function wcontrol_msg_phpversion($process)
+function wcontrol_msg_phpversion(Process $process)
 {
     if ($process->errorMessage) {
         return $process->errorMessage;
@@ -545,7 +624,7 @@ function wcontrol_msg_phpversion($process)
  * @return bool
  */
 
-function wcontrol_check_pgempty(&$process)
+function wcontrol_check_pgempty(Process & $process)
 {
     
     if (!function_exists('pg_connect')) {
@@ -590,7 +669,7 @@ function wcontrol_check_pgempty(&$process)
     return true;
 }
 
-function wcontrol_msg_pgempty($process)
+function wcontrol_msg_pgempty(Process $process)
 {
     if ($process->errorMessage) {
         return $process->errorMessage;
@@ -599,7 +678,7 @@ function wcontrol_msg_pgempty($process)
     }
 }
 
-function wcontrol_check_ncurses(&$process)
+function wcontrol_check_ncurses(Process & $process)
 {
     
     ob_start();
@@ -617,7 +696,7 @@ function wcontrol_check_ncurses(&$process)
     return true;
 }
 
-function wcontrol_msg_ncurses($process)
+function wcontrol_msg_ncurses(Process $process)
 {
     return "";
 }
@@ -626,7 +705,7 @@ function wcontrol_msg_ncurses($process)
  * @param Process $process
  * @return bool
  */
-function wcontrol_check_phpbug45996(&$process)
+function wcontrol_check_phpbug45996(Process & $process)
 {
     $expected = "a'b";
     $vals = array();
@@ -648,7 +727,7 @@ EOXML;
     return true;
 }
 
-function wcontrol_msg_phpbug45996(&$process)
+function wcontrol_msg_phpbug45996(Process & $process)
 {
     return sprintf("Checking for PHP bug #45996");
 }
@@ -657,7 +736,7 @@ function wcontrol_msg_phpbug45996(&$process)
  * @param Process $process
  * @return bool
  */
-function wcontrol_check_phpbug40926(&$process)
+function wcontrol_check_phpbug40926(Process & $process)
 {
     require_once ('lib/Lib.System.php');
     require_once ('class/Class.WIFF.php');
@@ -705,7 +784,7 @@ EOF;
     return true;
 }
 
-function wcontrol_msg_phpbug40926(&$process)
+function wcontrol_msg_phpbug40926(Process & $process)
 {
     return sprintf("Checking for PHP bug #40926");
 }

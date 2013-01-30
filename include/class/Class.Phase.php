@@ -3,7 +3,7 @@
  * @author Anakeen
  * @license http://www.fsf.org/licensing/licenses/agpl-3.0.html GNU Affero General Public License
  * @package FDL
- */
+*/
 /**
  * Phase Class
  * @author Anakeen
@@ -43,6 +43,7 @@ class Phase
             'pre-upgrade',
             'pre-remove',
             'unpack',
+            'clean-unpack',
             'remove',
             'param',
             'post-install',
@@ -56,11 +57,10 @@ class Phase
             return $plist;
         }
         // Special internal hard coded phase
-        if ($this->name == 'unregister-module') {
-            return $plist;
-        }
-        if ($this->name == 'purge-unreferenced-parameters-value') {
-            return $plist;
+        if ($this->name == 'unregister-module' || $this->name == 'purge-unreferenced-parameters-value' || $this->name == 'unpack' || $this->name == 'clean-unpack') {
+            return array(
+                new Process(sprintf("<%s><label>Do %s</label></%s>", $this->name, $this->name, $this->name) , $this)
+            );
         }
         // Get processes for the phase from module's info.xml
         $phaseNodeList = $this->xmlNode->getElementsByTagName($this->name);
