@@ -470,7 +470,7 @@ function wiff_context_module_install_local(Context & $context, &$options, &$pkgN
             }
             $error = "";
             if ($module->errorMessage) {
-                $error = "\033[0;31m (" . $module->errorMessage . ")\033[0;00m";
+                $error = "(" . fg_red() . $module->errorMessage . color_reset() . ")";
             }
             echo sprintf("- %s-%s-%s %s%s\n", $module->name, $module->version, $module->release, $op, $error);
         }
@@ -518,7 +518,7 @@ function wiff_context_module_install_remote(Context & $context, &$options, &$mod
             }
             $error = "";
             if ($module->errorMessage) {
-                $error = "\033[0;31m (" . $module->errorMessage . ")\033[0;00m";
+                $error = "(" . fg_red() . $module->errorMessage . color_reset() . ")";
             }
             echo sprintf("- %s-%s-%s %s%s\n", $module->name, $module->version, $module->release, $op, $error);
         }
@@ -892,7 +892,7 @@ function wiff_context_module_upgrade_local(Context & $context, &$options, &$pkgN
             }
             $error = "";
             if ($module->errorMessage) {
-                $error = "\033[0;31m (" . $module->errorMessage . ")\033[0;00m";
+                $error = "(" . fg_red() . $module->errorMessage . color_reset() . ")";
             }
             echo sprintf("- %s-%s-%s %s%s\n", $module->name, $module->version, $module->release, $op, $error);
         }
@@ -950,7 +950,7 @@ function wiff_context_module_upgrade_remote(Context & $context, &$options, &$mod
             }
             $error = "";
             if ($module->errorMessage) {
-                $error = "\033[0;31m (" . $module->errorMessage . ")\033[0;00m";
+                $error = "(" . fg_red() . $module->errorMessage . color_reset() . ")";
             }
             echo sprintf("- %s-%s-%s %s%s\n", $module->name, $module->version, $module->release, $op, $error);
         }
@@ -1617,67 +1617,67 @@ function license_ask($moduleName, $licenseName, $license, &$options)
  */
 function fg_black()
 {
-    return chr(0x1b) . '[30m';
+    return (!posix_isatty(STDOUT)) ? '' : chr(0x1b) . '[30m';
 }
 
 function bg_black()
 {
-    return chr(0x1b) . '[40m';
+    return (!posix_isatty(STDOUT)) ? '' : chr(0x1b) . '[40m';
 }
 
 function fg_white()
 {
-    return chr(0x1b) . '[37m';
+    return (!posix_isatty(STDOUT)) ? '' : chr(0x1b) . '[37m';
 }
 
 function bg_white()
 {
-    return chr(0x1b) . '[47m';
+    return (!posix_isatty(STDOUT)) ? '' : chr(0x1b) . '[47m';
 }
 
 function fg_red()
 {
-    return chr(0x1b) . '[31m';
+    return (!posix_isatty(STDOUT)) ? '' : chr(0x1b) . '[31m';
 }
 
 function bg_red()
 {
-    return chr(0x1b) . '[41m';
+    return (!posix_isatty(STDOUT)) ? '' : chr(0x1b) . '[41m';
 }
 
 function fg_green()
 {
-    return chr(0x1b) . '[32m';
+    return (!posix_isatty(STDOUT)) ? '' : chr(0x1b) . '[32m';
 }
 
 function bg_green()
 {
-    return chr(0x1b) . '[42m';
+    return (!posix_isatty(STDOUT)) ? '' : chr(0x1b) . '[42m';
 }
 
 function fg_blue()
 {
-    return chr(0x1b) . '[34m';
+    return (!posix_isatty(STDOUT)) ? '' : chr(0x1b) . '[34m';
 }
 
 function bg_blue()
 {
-    return chr(0x1b) . '[44m';
+    return (!posix_isatty(STDOUT)) ? '' : chr(0x1b) . '[44m';
 }
 
 function fg_yellow()
 {
-    return chr(0x1b) . '[33m';
+    return (!posix_isatty(STDOUT)) ? '' : chr(0x1b) . '[33m';
 }
 
 function bg_yellow()
 {
-    return chr(0x1b) . '[43m';
+    return (!posix_isatty(STDOUT)) ? '' : chr(0x1b) . '[43m';
 }
 
 function color_reset()
 {
-    return chr(0x1b) . '[0m';
+    return (!posix_isatty(STDOUT)) ? '' : chr(0x1b) . '[0m';
 }
 /**
  * change UID to the owner of the wiff script
