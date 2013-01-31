@@ -545,7 +545,7 @@ if (isset($_REQUEST['context']) && isset($_REQUEST['module']) && isset($_REQUEST
     }
 }
 // Request to unpack module in context
-if (isset($_REQUEST['context']) && isset($_REQUEST['module']) && isset($_REQUEST['unpack'])) {
+/*if (isset($_REQUEST['context']) && isset($_REQUEST['module']) && isset($_REQUEST['unpack'])) {
     $module = $context->getModuleDownloaded($_REQUEST['module']);
     
     if ($module->unpack($context->root)) {
@@ -573,7 +573,7 @@ if (isset($_REQUEST['cleanUnpack']) && isset($_REQUEST['context']) && isset($_RE
         answer(null, $module->errorMessage);
     }
     answer(true);
-}
+}*/
 // Request to activate a repo list in context
 // TODO Unused
 if (isset($_REQUEST['context']) && isset($_REQUEST['activateRepo']) && isset($_REQUEST['repo'])) {
@@ -655,7 +655,7 @@ if (isset($_REQUEST['context']) && isset($_REQUEST['module']) && isset($_REQUEST
 // Request to get process list for a given phase
 if (isset($_REQUEST['context']) && isset($_REQUEST['module']) && isset($_REQUEST['phase']) && isset($_REQUEST['getProcessList']) && isset($_REQUEST['operation'])) {
     $module = false;
-    if ($_REQUEST['operation'] == 'parameter') {
+    if ($_REQUEST['operation'] == 'parameter' || $_REQUEST['phase'] == 'unregister-module') {
         $module = $context->getModuleInstalled($_REQUEST['module']);
     } else {
         $module = $context->getModuleDownloaded($_REQUEST['module']);
@@ -681,7 +681,7 @@ if (isset($_REQUEST['context']) && isset($_REQUEST['module']) && isset($_REQUEST
     }
     
     $module = false;
-    if ($_REQUEST['operation'] == 'parameter') {
+    if ($_REQUEST['operation'] == 'parameter' || $_REQUEST['phase'] == 'unregister-module') {
         $module = $context->getModuleInstalled($_REQUEST['module']);
     } else {
         $module = $context->getModuleDownloaded($_REQUEST['module']);
@@ -884,7 +884,7 @@ if (isset($_REQUEST['context']) && isset($_REQUEST['module']) && isset($_REQUEST
             exit(1);
         }
     }
-    $ret = $module->setStatus('installed');
+    $ret = $module->setStatus('installed', $errorstatus);
     if ($ret === false) {
         $answer = new JSONAnswer(null, sprintf("Error setting installed status on module '%s': %s", $module->name, $module->errorMessage));
         echo $answer->encode();
@@ -894,37 +894,13 @@ if (isset($_REQUEST['context']) && isset($_REQUEST['module']) && isset($_REQUEST
     
     answer(true);
 }
-
-if (isset($_REQUEST['context']) && isset($_REQUEST['module']) && isset($_REQUEST['storeParameter']) && isset($_REQUEST['operation'])) {
-    $module = false;
-    if ($_REQUEST['operation'] == 'parameter') {
-        $module = $context->getModuleInstalled($_REQUEST['module']);
-    } else {
-        $module = $context->getModuleDownloaded($_REQUEST['module']);
-    }
-    
-    if (!$module) {
-        $module = $context->getModuleAvail($_REQUEST['module']);
-    }
-    
-    $parameterList = $module->getParameterList();
-    
-    foreach ($parameterList as $parameter) {
-        if (isset($_REQUEST[$parameter->name])) {
-            $parameter->value = $_REQUEST[$parameter->name];
-            $module->storeParameter($parameter);
-        }
-    }
-    
-    answer(true);
-}
 // Check repo validity
 if (isset($_REQUEST['checkRepoValidity']) && isset($_REQUEST['name'])) {
     $ret = $wiff->checkRepoValidity($_REQUEST['name']);
     answer($ret, $wiff->errorMessage);
 }
 // Unregister module
-if (isset($_REQUEST['context']) && isset($_REQUEST['module']) && isset($_REQUEST['unregisterModule'])) {
+/*if (isset($_REQUEST['context']) && isset($_REQUEST['module']) && isset($_REQUEST['unregisterModule'])) {
     $contextName = $_REQUEST['context'];
     $context = $wiff->getContext($contextName);
     if ($context === false) {
@@ -969,7 +945,7 @@ if (isset($_REQUEST['purgeUnreferencedParametersValue']) && isset($_REQUEST['con
     }
     
     answer(true);
-}
+}*/
 
 if (isset($_REQUEST['checkInitRegistration'])) {
     $force = (isset($_REQUEST['force']) && $_REQUEST['force'] == 'true') ? true : false;

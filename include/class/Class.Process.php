@@ -3,7 +3,7 @@
  * @author Anakeen
  * @license http://www.fsf.org/licensing/licenses/agpl-3.0.html GNU Affero General Public License
  * @package FDL
- */
+*/
 /**
  * Process Class
  * @author Anakeen
@@ -21,7 +21,9 @@ class Process
     public $label;
     public $help;
     public $type;
-    
+    /**
+     * @var Phase $phase
+     */
     public $phase;
     
     public $errorMessage;
@@ -39,7 +41,9 @@ class Process
         if ($ret === false) {
             return;
         }
-        
+        /**
+         * @var DOMElement $node
+         */
         $node = $doc->childNodes->item(0);
         if ($node === null) {
             return;
@@ -53,7 +57,6 @@ class Process
         $this->label = isset($elmt) ? $elmt->nodeValue : '';
         $elmt = $node->getElementsByTagName('help')->item(0);
         $this->help = isset($elmt) ? $elmt->nodeValue : '';
-        
         if ($this->label == "") {
             $this->label = $this->computeLabel();
         }
@@ -98,16 +101,16 @@ class Process
         require_once ('lib/Lib.Wcontrol.php');
         require_once ('class/Class.Debug.php');
         
-        putenv("WIFF_CONTEXT_NAME=" . $this->phase->module->context->name);
-        putenv("WIFF_CONTEXT_ROOT=" . $this->phase->module->context->root);
+        putenv("WIFF_CONTEXT_NAME=" . $this->phase->module->getContext()->name);
+        putenv("WIFF_CONTEXT_ROOT=" . $this->phase->module->getContext()->root);
         
         $cwd = getcwd();
         
-        $ret = chdir($this->phase->module->context->root);
+        $ret = chdir($this->phase->module->getContext()->root);
         if ($ret === false) {
             return array(
                 'ret' => false,
-                'output' => sprintf("Could not chdir to %s.", $this->phase->module->context->root)
+                'output' => sprintf("Could not chdir to %s.", $this->phase->module->getContext()->root)
             );
         }
         

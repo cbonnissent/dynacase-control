@@ -3752,7 +3752,7 @@ function executePhaseList(operation) {
 
 	switch (phase) {
 
-		case 'unpack' :
+		/*case 'unpack' :
 
 			Ext.Ajax.request({
 				url : 'wiff.php',
@@ -3767,6 +3767,7 @@ function executePhaseList(operation) {
 					var response = eval('(' + responseObject.responseText + ')');
 					if (response.error) {
 						Ext.Msg.alert('Server Error', response.error);
+                        return false;
 					}
 
 					var data = response.data;
@@ -3803,9 +3804,9 @@ function executePhaseList(operation) {
 					executePhaseList(operation);
 				}
 			});
-			break;
+			break;*/
 
-		case 'unregister-module' :
+		/*case 'unregister-module' :
 
 			Ext.Ajax.request({
 				url : 'wiff.php',
@@ -3843,8 +3844,7 @@ function executePhaseList(operation) {
 					executePhaseList(operation);
 				}
 			});
-			break;
-
+			break;*/
 		default :
 
 			Ext.Ajax.request({
@@ -4241,8 +4241,9 @@ function executeProcessList(module, phase, operation) {
 
 }
 
-function setModuleStatusInstalled(module, operation) {
+function setModuleStatusInstalled(module, operation, errorstatus) {
 
+    if (!errorstatus) errorstatus = '';
 	Ext.Ajax.request({
 				url : 'wiff.php',
 				params : {
@@ -4250,7 +4251,7 @@ function setModuleStatusInstalled(module, operation) {
 					context : currentContext,
 					module : module.name,
 					status : 'installed',
-					errorstatus : '',
+					errorstatus : errorstatus,
 					operation : operation,
 					authInfo : Ext.encode(authInfo)
 				},

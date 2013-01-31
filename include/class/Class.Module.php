@@ -34,8 +34,13 @@ class Module
     public $description;
     
     public $infopath = false;
-    
+    /**
+     * @var Context
+     */
     private $context;
+    /**
+     * @var Repository
+     */
     public $repository;
     
     public $status;
@@ -100,6 +105,14 @@ class Module
         return isset($this->$property) ? $this->$property : null;
     }
     
+    public function &getContext()
+    {
+        return $this->context;
+    }
+    /**
+     * @param DOMElement $xmlNode
+     * @return DOMElement
+     */
     public function parseXmlNode($xmlNode)
     {
         $this->xmlNode = $xmlNode;
@@ -132,9 +145,15 @@ class Module
         $this->requires = array();
         $requiresNodeList = $xmlNode->getElementsByTagName('requires');
         if ($requiresNodeList->length > 0) {
+            /**
+             * @var DOMElement $requiresNode
+             */
             $requiresNode = $requiresNodeList->item(0);
             $installerNodeList = $requiresNode->getElementsByTagName('installer');
             if ($installerNodeList->length > 0) {
+                /**
+                 * @var DOMElement $installerNode
+                 */
                 $installerNode = $installerNodeList->item(0);
                 $this->requires['installer'] = array(
                     'version' => $installerNode->getAttribute('version') ,
@@ -143,6 +162,9 @@ class Module
             }
             $moduleNodeList = $requiresNode->getElementsByTagName('module');
             foreach ($moduleNodeList as $moduleNode) {
+                /**
+                 * @var DOMElement $moduleNode
+                 */
                 $this->requires['modules'][] = array(
                     'name' => $moduleNode->getAttribute('name') ,
                     'version' => $moduleNode->getAttribute('version') ,
@@ -154,6 +176,9 @@ class Module
         $this->replaces = array();
         $replacesNodeList = $xmlNode->getElementsByTagName('replaces');
         if ($replacesNodeList->length > 0) {
+            /**
+             * @var DOMElement $replacesNode
+             */
             $replacesNode = $replacesNodeList->item(0);
             $moduleNodeList = $replacesNode->getElementsByTagName('module');
             foreach ($moduleNodeList as $moduleNode) {
@@ -162,10 +187,12 @@ class Module
                 ));
             }
         }
-        
         return $xmlNode;
     }
-    
+    /**
+     * @param DOMElement $node
+     * @return bool|string
+     */
     private function xt_innerXML(&$node)
     {
         if (!$node) {
@@ -176,7 +203,9 @@ class Module
         preg_match('!\<.*?\>(.*)\</.*?\>!s', $nodeAsString, $match);
         return isset($match[1]) ? $match[1] : '';
     }
-    
+    /**
+     * @param DOMElement $xmlNode
+     */
     public function parseXmlChangelogNode($xmlNode)
     {
         
@@ -185,11 +214,16 @@ class Module
             $this->changelog = array();
             
             foreach ($changelogNodeList as $changelogNode) {
-                
+                /**
+                 * @var DOMElement $changelogNode
+                 */
                 $action = array();
                 
                 $changelogSubNodeList = $changelogNode->getElementsByTagName('change');
                 foreach ($changelogSubNodeList as $actionNode) {
+                    /**
+                     * @var DOMElement $actionNode
+                     */
                     $action[] = array(
                         'title' => $actionNode->getAttribute('title') ,
                         'url' => $actionNode->getAttribute('url') ,
@@ -215,7 +249,7 @@ class Module
     }
     /**
      * Set error status
-     * @param string new error status of module
+     * @param string $newErrorStatus new error status of module
      * @return boolean method success
      */
     public function setErrorStatus($newErrorStatus)
@@ -233,14 +267,19 @@ class Module
         $xpath = new DOMXPath($xml);
         
         $modules = $xpath->query("/contexts/context[@name = '" . $this->context->name . "']/modules/module[@name = '" . $this->name . "']");
-        $modules->item(0)->setAttribute('errorstatus', $newErrorStatus);
+        /**
+         * @var DOMElement $moduleNode
+         */
+        $moduleNode = $modules->item(0);
+        $moduleNode->setAttribute('errorstatus', $newErrorStatus);
         $xml->save($wiff->contexts_filepath);
         
         return true;
     }
     /**
      * Download archive in temporary folder
-     * @return temp filename of downloaded file, or false in case of error
+     * @param string $status
+     * @return string|bool temp filename of downloaded file, or false in case of error
      */
     public function download($status = '')
     {
@@ -278,7 +317,9 @@ class Module
             return false;
         }
         $contextsXPath = new DOMXPath($contextsXML);
-        
+        /**
+         * @var DOMElement $module
+         */
         $module = $contextsXML->importNode($module, true); // Import module to contexts xml document
         $module->setAttribute('status', 'downloaded');
         $module->setAttribute('tmpfile', $this->tmpfile);
@@ -393,7 +434,7 @@ class Module
     }
     /**
      * Remove temp file used by download/unpack/install process
-     * @return false in case of error
+     * @return bool false in case of error
      */
     public function cleanupDownload()
     {
@@ -403,9 +444,53 @@ class Module
         }
         return false;
     }
+    
+    public function getTmpManifestEntriesForModule()
+    {
+        $manifest = $this->getManifest();
+        $manifestLines = preg_split("/\n/", $manifest);
+        $manifestEntries = array();
+        
+        foreach ($manifestLines as $line) {
+            $minfo = array();
+            if (!preg_match("|^(?P<type>.)(?P<mode>.........)\s+(?P<uid>.*?)/(?P<gid>.*?)\s+(?P<size>\d+)\s+(?P<date>\d\d\d\d-\d\d-\d\d\s+\d\d:\d\d(?::\d\d)?)\s+(?P<name>.*?)(?P<link>\s+->\s+.*?)?$|", $line, $minfo)) {
+                continue;
+            }
+            array_push($manifestEntries, $minfo);
+        }
+        
+        return $manifestEntries;
+    }
+    
+    public function checkManifestFiles()
+    {
+        $moduleManifest = $this->getTmpManifestEntriesForModule();
+        if (!empty($moduleManifest)) {
+            $moduleInstalledList = $this->context->getInstalledModuleList();
+            $modulesManifestFiles = array();
+            foreach ($moduleManifest as $manifest) {
+                $modulesManifestFiles[] = $manifest["name"];
+            }
+            foreach ($moduleInstalledList as $module) {
+                if ($module->name != $this->name) {
+                    /**
+                     * @var Module $module
+                     */
+                    $installedManifest = $this->context->getManifestEntriesForModule($module->name);
+                    foreach ($installedManifest as $manifest) {
+                        if ($manifest["type"] != "d" && in_array($manifest["name"], $modulesManifestFiles)) {
+                            $this->errorMessage = sprintf("File '%s' is already given by module '%s'", $manifest["name"], $module->name);
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+        return true;
+    }
     /**
      * Unpack archive in specified destination directory
-     * @param directory path to unpack the archive in (e.g. context root dir)
+     * @param string $destDir directory path to unpack the archive in (e.g. context root dir)
      * @return string containing the given destination dir pr false in case of error
      */
     public function unpack($destDir = '')
@@ -416,6 +501,7 @@ class Module
             $this->errorMessage = sprintf("Temporary file of downloaded module does not exists.");
             return false;
         }
+        if (!$this->checkManifestFiles()) return false;
         // Store BOM/manifest
         $ret = $this->context->storeManifestForModule($this);
         if ($ret === false) {
@@ -476,6 +562,9 @@ class Module
         
         $pSeen = array();
         foreach ($params as $param) {
+            /**
+             * @var DOMElement $param
+             */
             $paramName = $param->getAttribute('name');
             if (array_key_exists($paramName, $pSeen)) {
                 continue;
@@ -505,7 +594,11 @@ class Module
             if ($storedParamValue->length <= 0) {
                 $p->value = $this->getParameterValueFromReplacedModules($contextsXpath, $p->name);
             } else {
-                if ($p->volatile == 'yes' && $storedParamValue->item(0)->getAttribute('volatile') != 'yes') {
+                /**
+                 * @var DOMElement $storedParamValueNode
+                 */
+                $storedParamValueNode = $storedParamValue->item(0);
+                if ($p->volatile == 'yes' && $storedParamValueNode->getAttribute('volatile') != 'yes') {
                     /*
                      * Handle the case where a parameter is defined as volatile in the module and the stored value
                      * is not declared as volatile: the definition from the module supersede the stored one.
@@ -513,7 +606,7 @@ class Module
                     */
                     $p->value = $p->default;
                 } else {
-                    $p->value = $storedParamValue->item(0)->getAttribute('value');
+                    $p->value = $storedParamValueNode->getAttribute('value');
                 }
             }
             
@@ -548,7 +641,11 @@ class Module
             if ($storedParamValue->length <= 0) {
                 continue;
             }
-            $value = $storedParamValue->item(0)->getAttribute('value');
+            /**
+             * @var DOMElement $storedParamValueNode
+             */
+            $storedParamValueNode = $storedParamValue->item(0);
+            $value = $storedParamValueNode->getAttribute('value');
             break;
         }
         
@@ -572,10 +669,10 @@ class Module
     }
     /**
      * Store Module parameter
-     * @return the given object Parameter or false in case of error
-     * @param object Parameter
+     * @return Parameter|bool the given object Parameter or false in case of error
+     * @param Parameter $parameter
      */
-    public function storeParameter($parameter)
+    public function storeParameter(Parameter $parameter)
     {
         require_once ('class/Class.WIFF.php');
         
@@ -645,7 +742,7 @@ class Module
     /**
      * Get Phase list
      * @return array of object Phase
-     * @param string operation string code 'install|upgrade|uninstall|parameter'
+     * @param string $operation operation string code 'install|upgrade|uninstall|parameter'
      */
     public function getPhaseList($operation)
     {
@@ -660,21 +757,12 @@ class Module
                 break;
 
             case 'upgrade':
-                if (count($this->replaces) <= 0) {
-                    return array(
-                        'pre-upgrade',
-                        'clean-unpack',
-                        'post-upgrade',
-                        'purge-unreferenced-parameters-value'
-                    );
-                } else {
-                    return array(
-                        'pre-upgrade',
-                        'clean-unpack',
-                        'post-upgrade',
-                        'purge-unreferenced-parameters-value'
-                    );
-                }
+                return array(
+                    'pre-upgrade',
+                    'clean-unpack',
+                    'post-upgrade',
+                    'purge-unreferenced-parameters-value'
+                );
                 break;
 
             case 'uninstall':
@@ -782,7 +870,9 @@ public function setStatus($status, $errorstatus = null)
         $this->errorMessage = sprintf("Could not find module '%s' in context '%s'!", $this->name, $this->context->name);
         return false;
     }
-    
+    /**
+     * @var DOMElement $moduleNode
+     */
     $moduleNode = $moduleNodeList->item(0);
     
     $this->status = $status;
@@ -825,7 +915,9 @@ public function deleteTmpFile()
         $this->errorMessage = sprintf("Could not find module '%s' in context '%s'!", $this->name, $this->context->name);
         return false;
     }
-    
+    /**
+     * @var DOMElement $moduleNode
+     */
     $moduleNode = $moduleNodeList->item(0);
     
     $tmpfile = $moduleNode->getAttribute('tmpfile');
