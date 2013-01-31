@@ -162,7 +162,11 @@ if (isset($_REQUEST['context'])) {
 if (isset($_REQUEST['version'])) {
     $version = $wiff->getVersion();
     if (!$wiff->errorMessage) {
-        answer($version);
+        if (isset($_REQUEST['welcome'])) answer(array(
+            "html" => file_get_contents("welcome.html") ,
+            "version" => $version
+        ));
+        else answer($version);
     } else {
         answer(null, $wiff->errorMessage);
     }
