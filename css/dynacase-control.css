@@ -224,3 +224,43 @@
 .error {
     color: #900;
 }
+
+
+.welcome {
+    padding:50px;
+    color: #888;
+    font-family: Helvetica, Arial, sans;
+}
+.welcome .content {
+    margin-left: 7em;
+}
+.welcome a { color: #08C; text-decoration:none; }
+.welcome img { float:left; }
+.welcome h1 { font-size: 2em; font-weight: bold; }
+.welcome ul { list-style-type: circle; padding-left: 2em; }
+.welcome li { padding-top: 1em; }
+
+
+.welcome .message {
+  font-style: normal;
+  margin-top:3em;
+}
+
+.welcome .documentation { margin-top:3em; }
+
+.welcome .licence {
+  font-style: normal;
+  margin-top:3em;
+}
+
+.welcome pre.code {
+    font-family: courier;
+    font-size: 80%;
+    height: 200px;
+    overflow-y: auto;
+    border: 1px solid #888;
+    border-radius: 5px;
+    margin-top:1em;
+}
+
+  
