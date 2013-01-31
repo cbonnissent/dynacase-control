@@ -3129,14 +3129,14 @@ function getGlobalwin(display) {
 				layout : 'column',
 				resizable : true,
 				// height: 400,
-				width : 700,
+				width : Ext.getCmp("context-list").getWidth(),
 				modal : true
 			});
 
 	modulepanel = new Ext.Panel({
 				title : 'Module List',
 				columnWidth : 0.25,
-				height : 422,
+				height : Ext.getCmp("context-list").getHeight(),
 				setModuleIcon : function(name, icon) {
 					var panel = this.getComponent('module-' + name);
 					panel.setIconClass(icon);
@@ -3892,11 +3892,10 @@ function executeProcessList(module, phase, operation) {
 		}
 
 		if (!processpanel[module.name]) {
-
 			var toolbar = new Ext.Toolbar({});
 
 			processpanel[module.name] = new Ext.Panel({
-						height : 400,
+						height : Ext.getCmp("context-list").getHeight(),
 						columnWidth : 0.75,
 						bbar : toolbar,
 						bodyStyle : 'overflow:auto;'
@@ -3986,13 +3985,16 @@ function executeProcessList(module, phase, operation) {
 			toolbar.add(processpanel[module.name].statustext);
 			toolbar.add(processpanel[module.name].processbutton);
 			toolbar.add(processpanel[module.name].ignorebutton);
-
 			globalwin.add(processpanel[module.name]);
 
 		}
 
 		globalwin.doLayout();
-
+        if (toolbar) {
+            var newHeight = processpanel[module.name].getHeight()-toolbar.getHeight();
+            processpanel[module.name].setHeight(newHeight);
+            modulepanel.setHeight(newHeight);
+        }
 		var module = module;
 
 		if (!processpanel[module.name].titlepanel) {
