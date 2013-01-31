@@ -358,8 +358,8 @@ class WIFF
         $repoList = array();
         
         $xml = new DOMDocument();
-        $xml->load($this->params_filepath);
-        if ($xml === false) {
+        $ret = $xml->load($this->params_filepath);
+        if ($ret === false) {
             $this->errorMessage = sprintf("Error loading XML file '%s'.", $this->params_filepath);
             return false;
         }
@@ -390,8 +390,8 @@ class WIFF
         }
         
         $xml = new DOMDocument();
-        $xml->load($this->params_filepath);
-        if ($xml === false) {
+        $ret = $xml->load($this->params_filepath);
+        if ($ret === false) {
             $this->errorMessage = sprintf("Error loading XML file '%s'.", $this->params_filepath);
             return false;
         }
@@ -425,8 +425,8 @@ class WIFF
         }
         
         $xml = new DOMDocument();
-        $xml->load($this->params_filepath);
-        if ($xml === false) {
+        $ret = $xml->load($this->params_filepath);
+        if ($ret === false) {
             $this->errorMessage = sprintf("Error loading XML file '%s'.", $this->params_filepath);
             return false;
         }
@@ -518,8 +518,8 @@ class WIFF
         }
         
         $xml = new DOMDocument();
-        $xml->load($this->params_filepath);
-        if ($xml === false) {
+        $ret = $xml->load($this->params_filepath);
+        if ($ret === false) {
             $this->errorMessage = sprintf("Error loading XML file '%s'.", $this->params_filepath);
             return false;
         }
@@ -572,8 +572,8 @@ class WIFF
         }
         
         $xml = new DOMDocument();
-        $xml->load($this->params_filepath);
-        if ($xml === false) {
+        $ret = $xml->load($this->params_filepath);
+        if ($ret === false) {
             $this->errorMessage = sprintf("Error loading XML file '%s'.", $this->params_filepath);
             return false;
         }
@@ -619,8 +619,8 @@ class WIFF
         require_once ('class/Class.Repository.php');
         
         $xml = new DOMDocument();
-        $xml->load($this->params_filepath);
-        if ($xml === false) {
+        $ret = $xml->load($this->params_filepath);
+        if ($ret === false) {
             $this->errorMessage = sprintf("Error loading XML file '%s'.", $this->params_filepath);
             return false;
         }
@@ -675,8 +675,8 @@ class WIFF
         $contextList = array();
         
         $xml = new DOMDocument();
-        $xml->load($this->contexts_filepath);
-        if ($xml === false) {
+        $ret = $xml->load($this->contexts_filepath);
+        if ($ret === false) {
             $this->errorMessage = sprintf("Error loading XML file '%s'.", $this->contexts_filepath);
             return false;
         }
@@ -829,8 +829,8 @@ class WIFF
                     }
                     
                     $xml = new DOMDocument();
-                    $xml->loadXML($info_content);
-                    if ($xml === false) {
+                    $ret = $xml->loadXML($info_content);
+                    if ($ret === false) {
                         $this->addErrorToArchiveInfo(sprintf("Error loading XML file '%s'.", $info_content) , $archiveContext, $archivedContextList);
                         continue;
                     }
@@ -1197,14 +1197,21 @@ class WIFF
         // Write contexts XML
         $xml = new DOMDocument();
         $xml->preserveWhiteSpace = false;
-        $xml->load($this->contexts_filepath);
+        $ret = $xml->load($this->contexts_filepath);
+        if ($ret === false) {
+            $this->errorMessage = sprintf("Error loading XML file '%s'.", $this->contexts_filepath);
+            return false;
+        }
         $xml->formatOutput = true;
         
         $infoFile = $temporary_extract_root . DIRECTORY_SEPARATOR . "info.xml";
         
         $archiveXml = new DOMDocument();
-        $archiveXml->load($infoFile);
-        
+        $ret = $archiveXml->load($infoFile);
+        if ($ret === false) {
+            $this->errorMessage = sprintf("Error loading XML file '%s'.", $infoFile);
+            return false;
+        }
         $xmlXPath = new DOMXPath($xml);
         $contextList = $xmlXPath->query("/contexts/context[@name='" . $name . "']");
         if ($contextList->length != 0) {
@@ -1391,8 +1398,8 @@ class WIFF
         require_once ('class/Class.Context.php');
         
         $xml = new DOMDocument();
-        $xml->load($this->contexts_filepath);
-        if ($xml === false) {
+        $ret = $xml->load($this->contexts_filepath);
+        if ($ret === false) {
             $this->errorMessage = sprintf("Error loading XML file '%s'.", $this->contexts_filepath);
             return false;
         }
@@ -1485,7 +1492,11 @@ class WIFF
         // Write contexts XML
         $xml = new DOMDocument();
         $xml->preserveWhiteSpace = false;
-        $xml->load($this->contexts_filepath);
+        $ret = $xml->load($this->contexts_filepath);
+        if ($ret === false) {
+            $this->errorMessage = sprintf("Error loading XML file '%s'.", $this->contexts_filepath);
+            return false;
+        }
         $xml->formatOutput = true;
         
         $node = $xml->createElement('context');
@@ -1525,7 +1536,11 @@ class WIFF
         // Write contexts XML
         $xml = new DOMDocument();
         $xml->preserveWhiteSpace = false;
-        $xml->load($this->contexts_filepath);
+        $ret = $xml->load($this->contexts_filepath);
+        if ($ret === false) {
+            $this->errorMessage = sprintf("Error loading XML file '%s'.", $this->contexts_filepath);
+            return false;
+        }
         $xml->formatOutput = true;
         
         $xpath = new DOMXPath($xml);
