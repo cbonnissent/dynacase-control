@@ -140,7 +140,9 @@
 .x-tab-strip-active .x-icon-loading {
     color: #395B8E !important;
 }
-
+.x-tab-joint {
+    z-index: 0 !important;
+}
 .red-row .x-grid3-cell-inner {
     color: red;
 }

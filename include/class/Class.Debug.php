@@ -3,7 +3,7 @@
  * @author Anakeen
  * @license http://www.fsf.org/licensing/licenses/agpl-3.0.html GNU Affero General Public License
  * @package FDL
- */
+*/
 /**
  * Context Class
  * @author Anakeen
@@ -23,7 +23,6 @@ class Debug
      */
     public static function log($string)
     {
-        
         $wiff = wiff::getInstance();
         $debugMode = $wiff->getParam('debug') == 'yes' ? true : false;
         
@@ -40,6 +39,7 @@ class Debug
             
             fwrite($flog, date("F j, Y, g:i a") . ' : ' . $string . "\r\n");
         }
+        return true;
     }
     /**
      * Mail log file to a given mail address
