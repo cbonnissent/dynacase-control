@@ -474,27 +474,26 @@ if (isset($_REQUEST['createContextFromArchive'])) {
         answer(null, 'A vault root must be provided.');
     } elseif (!$_REQUEST['core_pgservice']) {
         answer(null, 'A database service must be provided.');
-    } elseif ($_REQUEST['remove_profiles']) {
+    } elseif (isset($_REQUEST['remove_profiles'])) {
         if (!$_REQUEST['user_login']) {
             answer(null, 'If you remove profiles, you must specify a user login.');
         } elseif (!$_REQUEST['user_password']) {
             answer(null, 'If you remove profiles, you must specify a user password.');
         }
+    }
+    $archiveId = $_REQUEST['archiveId'];
+    $contextName = $_REQUEST['name'];
+    
+    $remove_profiles = isset($_REQUEST['remove_profiles']);
+    $user_login = $_REQUEST['user_login'];
+    $user_password = $_REQUEST['user_password'];
+    $clean_tmp_directory = isset($_REQUEST['clean_tmp_directory']);
+    $result = $wiff->createContextFromArchive($archiveId, $contextName, $_REQUEST['root'], $_REQUEST['desc'], $_REQUEST['url'], $_REQUEST['vault_root'], $_REQUEST['core_pgservice'], $remove_profiles, $user_login, $user_password, $clean_tmp_directory);
+    
+    if ($result === false) {
+        answer(null, $wiff->errorMessage);
     } else {
-        $archiveId = $_REQUEST['archiveId'];
-        $contextName = $_REQUEST['name'];
-        
-        $remove_profiles = isset($_REQUEST['remove_profiles']);
-        $user_login = $_REQUEST['user_login'];
-        $user_password = $_REQUEST['user_password'];
-        
-        $result = $wiff->createContextFromArchive($archiveId, $contextName, $_REQUEST['root'], $_REQUEST['desc'], $_REQUEST['url'], $_REQUEST['vault_root'], $_REQUEST['core_pgservice'], $remove_profiles, $user_login, $user_password, $_REQUEST['clean_tmp_directory']);
-        
-        if ($result === false) {
-            answer(null, $wiff->errorMessage);
-        } else {
-            answer($wiff->getContext($contextName));
-        }
+        answer($wiff->getContext($contextName));
     }
 }
 

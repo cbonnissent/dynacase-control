@@ -47,6 +47,7 @@ class WIFF
     
     public $lock = null;
     public $lock_level = 0;
+    public $errorStatus = "";
     
     private function __construct()
     {
@@ -167,6 +168,9 @@ class WIFF
         $return = false;
         
         foreach ($modules as $module) {
+            /**
+             * @var DOMElement $module
+             */
             $name = $module->getAttribute('name');
             if ($name == 'dynacase-control') {
                 $version = $module->getAttribute('version');
@@ -264,7 +268,7 @@ class WIFF
     }
     /**
      * Download latest WIFF file archive
-     * @return
+     * @return bool|string
      */
     private function download()
     {
@@ -273,7 +277,6 @@ class WIFF
     }
     /**
      * Unpack archive in specified destination directory
-     * @param directory path to unpack the archive in (e.g. context root dir)
      * @return string containing the given destination dir pr false in case of error
      */
     private function unpack()
@@ -404,7 +407,9 @@ class WIFF
             $this->errorMessage = "Repository does not exist.";
             return false;
         }
-        
+        /**
+         * @var DOMElement $repository
+         */
         $repository = $wiffRepoList->item(0);
         
         $repositoryObject = new Repository($repository);
@@ -413,6 +418,15 @@ class WIFF
     }
     /**
      * Add repository to global repo list
+     * @param $name
+     * @param $description
+     * @param $protocol
+     * @param $host
+     * @param $path
+     * @param $default
+     * @param $authenticated
+     * @param $login
+     * @param $password
      * @return boolean
      */
     public function createRepo($name, $description, $protocol, $host, $path, $default, $authenticated, $login, $password)
@@ -441,6 +455,9 @@ class WIFF
         }
         // Add repository to this context
         $node = $xml->createElement('access');
+        /**
+         * @var DOMElement $repository
+         */
         $repository = $xml->getElementsByTagName('repositories')->item(0)->appendChild($node);
         
         $repository->setAttribute('name', $name);
@@ -526,6 +543,9 @@ class WIFF
         $paramList = $xml->getElementsByTagName('param');
         if ($paramList->length > 0) {
             foreach ($paramList as $param) {
+                /**
+                 * @var DOMElement $param
+                 */
                 if ($param->getAttribute('name') === $name) {
                     $valueTest = $param->getAttribute('value');
                     $param->removeAttribute('value');
@@ -589,6 +609,10 @@ class WIFF
         // Add repository to this context
         //        $node = $xml->createElement('access');
         //        $repository = $xml->getElementsByTagName('repositories')->item(0)->appendChild($node);
+        
+        /**
+         * @var DOMElement $repository
+         */
         $repository = $wiffRepoList->item(0);
         
         $repository->setAttribute('name', $name);
@@ -651,7 +675,10 @@ class WIFF
         //echo 'SET AuthInfo Size'.count($request);
         $this->authInfo = $request;
     }
-    
+    /**
+     * @param $repoName
+     * @return bool|StdClass
+     */
     public function getAuthInfo($repoName)
     {
         //echo ('GET AuthInfo'.$repoName.count($this->authInfo));
@@ -687,7 +714,9 @@ class WIFF
         if ($contexts->length > 0) {
             
             foreach ($contexts as $context) {
-                
+                /**
+                 * @var DOMElement $context
+                 */
                 $repoList = array();
                 
                 $repositories = $context->getElementsByTagName('access');
@@ -696,15 +725,15 @@ class WIFF
                     $repoList[] = new Repository($repository);
                 }
                 
-                $context = new Context($context->getAttribute('name') , $context->getElementsByTagName('description')->item(0)->nodeValue, $context->getAttribute('root') , $repoList, $context->getAttribute('url') , $context->getAttribute('register'));
-                $context->isValid();
+                $contextClass = new Context($context->getAttribute('name') , $context->getElementsByTagName('description')->item(0)->nodeValue, $context->getAttribute('root') , $repoList, $context->getAttribute('url') , $context->getAttribute('register'));
+                $contextClass->isValid();
                 
-                if (!$context->isWritable()) {
-                    $this->errorMessage = sprintf("Apache user does not have write rights for context '%s'.", $context->name);
+                if (!$contextClass->isWritable()) {
+                    $this->errorMessage = sprintf("Apache user does not have write rights for context '%s'.", $contextClass->name);
                     return false;
                 }
                 
-                $contextList[] = $context;
+                $contextList[] = $contextClass;
             }
         }
         
@@ -838,9 +867,13 @@ class WIFF
                     $xpath = new DOMXpath($xml);
                     
                     $contexts = $xpath->query("/info/context");
-                    
+                    $contextName = "";
                     if ($contexts->length > 0) {
                         foreach ($contexts as $context) { // Should be only one context
+                            
+                            /**
+                             * @var DOMElement $context
+                             */
                             $contextName = $context->getAttribute('name');
                         }
                     }
@@ -1044,21 +1077,24 @@ class WIFF
         
         $archived_root = $wiff_root . WIFF::archive_filepath;
         
+        $temporary_extract_root = $archived_root . 'archived-tmp';
+        if (!is_dir($temporary_extract_root)) {
+            $ret = mkdir($temporary_extract_root);
+            if ($ret === false) {
+                $this->errorMessage = sprintf("Error creating temporary extract root directory '%s'.", $temporary_extract_root);
+                unlink($status_file);
+                return false;
+            }
+        }
+        $vaultfound = false;
+        $context_tar = $temporary_extract_root . DIRECTORY_SEPARATOR . "context.tar.gz";
+        $dump = $temporary_extract_root . DIRECTORY_SEPARATOR . "core_db.pg_dump.gz";
+        
         if ($handle = opendir($archived_root)) {
             
             while (false !== ($file = readdir($handle))) {
                 
                 if ($file == $archiveId . '.fcz') {
-                    
-                    $temporary_extract_root = $archived_root . 'archived-tmp';
-                    if (!is_dir($temporary_extract_root)) {
-                        $ret = mkdir($temporary_extract_root);
-                        if ($ret === false) {
-                            $this->errorMessage = sprintf("Error creating temporary extract root directory '%s'.", $temporary_extract_root);
-                            unlink($status_file);
-                            return false;
-                        }
-                    }
                     
                     $zip = new ZipArchiveCmd();
                     $zipfile = $archived_root . DIRECTORY_SEPARATOR . $file;
@@ -1084,8 +1120,6 @@ class WIFF
                         return false;
                     }
                     // --- Extract context tar gz --- //
-                    $context_tar = $temporary_extract_root . DIRECTORY_SEPARATOR . "context.tar.gz";
-                    
                     $script = sprintf("tar -zxf %s -C %s", escapeshellarg($context_tar) , escapeshellarg($root));
                     
                     exec($script, $output, $retval);
@@ -1138,8 +1172,6 @@ class WIFF
                     }
                     pg_close($dbconnect);
                     
-                    $dump = $temporary_extract_root . DIRECTORY_SEPARATOR . "core_db.pg_dump.gz";
-                    
                     $script = sprintf("gzip -dc %s | PGSERVICE=%s psql", escapeshellarg($dump) , escapeshellarg($pgservice));
                     exec($script, $output, $retval);
                     
@@ -1152,7 +1184,6 @@ class WIFF
                     
                     error_log('Database restored');
                     // --- Extract vault tar gz --- //
-                    $vaultfound = false;
                     if ($handle = opendir($temporary_extract_root)) {
                         
                         while (false !== ($file = readdir($handle))) {
@@ -1234,7 +1265,9 @@ class WIFF
             unlink($status_file);
             return false;
         }
-        
+        /**
+         * @var DOMElement $context
+         */
         $context = $xml->importNode($archiveList->item(0) , true); // Node must be imported from archive document.
         $context->setAttribute('name', $name);
         $context->setAttribute('root', $root);
@@ -1248,8 +1281,11 @@ class WIFF
             unlink($status_file);
             return false;
         }
-        
-        $paramList->item(0)->setAttribute('value', $pgservice);
+        /**
+         * @var DOMElement $paramNode
+         */
+        $paramNode = $paramList->item(0);
+        $paramNode->setAttribute('value', $pgservice);
         // Modify client_name in xml by context name
         $paramList = $xmlXPath->query("/contexts/context[@name='" . $name . "']/parameters-value/param[@name='client_name']");
         if ($paramList->length != 1) {
@@ -1259,7 +1295,7 @@ class WIFF
             return false;
         }
         
-        $paramList->item(0)->setAttribute('value', $name);
+        $paramNode->setAttribute('value', $name);
         // Modify or add vault_root in xml
         $paramList = $xmlXPath->query("/contexts/context[@name='" . $name . "']/parameters-value/param[@name='vault_root']");
         $paramValueList = $xmlXPath->query("/contexts/context[@name='" . $name . "']/parameters-value");
@@ -1274,7 +1310,7 @@ class WIFF
         if ($paramList->length != 1) {
             $paramVaultRoot = $paramValueList->item(0)->appendChild($paramVaultRoot);
         } else {
-            $paramVaultRoot = $paramValueList->item(0)->replaceChild($paramVaultRoot, $paramList->item(0));
+            $paramVaultRoot = $paramValueList->item(0)->replaceChild($paramVaultRoot, $paramNode);
         }
         
         $vault_save = $xml->createElement('param');
@@ -1326,8 +1362,6 @@ class WIFF
         unlink($status_file);
         
         return true;
-        //return $this->getContext($name);
-        
     }
     
     public function reconfigure($name)
@@ -1339,9 +1373,15 @@ class WIFF
         
         $installedModuleList = $context->getInstalledModuleList();
         foreach ($installedModuleList as $module) {
+            /**
+             * @var Module $module
+             */
             $phase = $module->getPhase('reconfigure');
             $processList = $phase->getProcessList();
             foreach ($processList as $process) {
+                /**
+                 * @var Process $process
+                 */
                 $process->execute();
             }
         }
@@ -1412,15 +1452,18 @@ class WIFF
         if ($context->length >= 1) {
             
             $repoList = array();
-            
-            $repositories = $context->item(0)->getElementsByTagName('access');
+            /**
+             * @var DOMElement $contextNode
+             */
+            $contextNode = $context->item(0);
+            $repositories = $contextNode->getElementsByTagName('access');
             
             foreach ($repositories as $repository) {
                 $repoList[] = new Repository($repository);
             }
             
             $this->errorMessage = null;
-            $context = new Context($context->item(0)->getAttribute('name') , $context->item(0)->getElementsByTagName('description')->item(0)->nodeValue, $context->item(0)->getAttribute('root') , $repoList, $context->item(0)->getAttribute('url') , $context->item(0)->getAttribute('register'));
+            $context = new Context($contextNode->getAttribute('name') , $contextNode->getElementsByTagName('description')->item(0)->nodeValue, $contextNode->getAttribute('root') , $repoList, $contextNode->getAttribute('url') , $contextNode->getAttribute('register'));
             
             if (!$context->isWritable() && $opt == false) {
                 $this->errorMessage = sprintf("Context '%s' configuration is not writable.", $context->name);
@@ -1500,6 +1543,9 @@ class WIFF
         $xml->formatOutput = true;
         
         $node = $xml->createElement('context');
+        /**
+         * @var DOMElement $context
+         */
         $context = $xml->getElementsByTagName('contexts')->item(0)->appendChild($node);
         
         $context->setAttribute('name', $name);
@@ -1546,6 +1592,9 @@ class WIFF
         $xpath = new DOMXPath($xml);
         
         $query = "/contexts/context[@root = '" . $root . "']";
+        /**
+         * @var DOMElement $context
+         */
         $context = $xpath->query($query)->item(0);
         
         $context->setAttribute('name', $name);
@@ -1586,6 +1635,9 @@ class WIFF
             return false;
         }
         foreach ($params as $param) {
+            /**
+             * @var DOMElement $param
+             */
             $paramName = $param->getAttribute('name');
             $paramValue = $param->getAttribute('value');
             $plist[$paramName] = $paramValue;
@@ -1595,7 +1647,7 @@ class WIFF
     }
     /**
      * Get a specific parameter value
-     * @return the value of the parameter or false in case of errors
+     * @return string the value of the parameter or false in case of errors
      * @param string $paramName the parameter name
      * @param boolean $strict if not found, should method report an error
      */
@@ -1614,7 +1666,7 @@ class WIFF
     }
     /**
      * Set a specific parameter value
-     * @return return the value or false in case of errors
+     * @return string return the value or false in case of errors
      * @param string $paramName the name of the parameter to set
      * @param string $paramValue the value of the parameter to set
      * @param bool $create
@@ -1638,6 +1690,9 @@ class WIFF
         $found = false;
         
         foreach ($params as $param) {
+            /**
+             * @var DOMElement $param
+             */
             $found = true;
             $param->setAttribute('value', $paramValue);
         }
@@ -1661,6 +1716,7 @@ class WIFF
     /**
      * download the file pointed by the URL to a temporary file
      * @param string $url the URL of the file to retrieve
+     * @param array $opts
      * @return bool|string the name of a temporary file holding the
      *         retrieved data or false in case of error
      */
@@ -1674,7 +1730,6 @@ class WIFF
             // treat url as a pathname to a local file
             return $this->downloadLocalFile($url, $opts);
         }
-        return false;
     }
     
     public function downloadHttpUrl($url, $opts = array())
@@ -1721,6 +1776,7 @@ class WIFF
         
         $envs = array();
         if ($this->getParam('use-proxy') === 'yes') {
+            $http_proxy = "";
             $proxy_host = $this->getParam('proxy-host');
             if ($proxy_host !== false && $proxy_host != '') {
                 $http_proxy = "http://" . $proxy_host;
@@ -1843,50 +1899,6 @@ class WIFF
         }
         
         return $paramValue;
-    }
-    
-    public function DOMDocumentLoadXML($DOMDocument, $xmlFile)
-    {
-        $fh = open($xmlFile, "rw");
-        if ($fh === false) {
-            $this->errorMessage = sprintf(__CLASS__ . "::" . __FUNCTION__ . " " . "Could not open '%s'.", $xmlFile);
-            return false;
-        }
-        
-        if (flock($fh, LOCK_EX) === false) {
-            $this->errorMessage = sprintf(__CLASS__ . "::" . __FUNCTION__ . " " . "Could not get lock on '%s'.", $xmlFile);
-            fclose($fh);
-            return false;
-        }
-        
-        $ret = $DOMDocument->load($xmlFile);
-        
-        flock($fh, LOCK_UN);
-        fclose($fh);
-        
-        return $ret;
-    }
-    
-    public function DOMDocumentSaveXML($DOMDocument, $xmlFile)
-    {
-        $fh = open($xmlFile, "rw");
-        if ($fh === false) {
-            $this->errorMessage = sprintf(__CLASS__ . "::" . __FUNCTION__ . " " . "Could not open '%s'.", $xmlFile);
-            return false;
-        }
-        
-        if (flock($fh, LOCK_EX) === false) {
-            $this->errorMessage = sprintf(__CLASS__ . "::" . __FUNCTION__ . " " . "Could not get lock on '%s'.", $xmlFile);
-            fclose($fh);
-            return false;
-        }
-        
-        $ret = $DOMDocument->save($xmlFile);
-        
-        flock($fh, LOCK_UN);
-        fclose($fh);
-        
-        return $ret;
     }
     
     public function lock()
@@ -2033,7 +2045,9 @@ class WIFF
             $warn = sprintf(__CLASS__ . "::" . __FUNCTION__ . " " . "Warning: found more than one license for module '%s' in context '%s'", $moduleName, $ctxName);
             error_log($warn);
         }
-        
+        /**
+         * @var DOMElement  $licenseNode
+         */
         $licenseNode = $licensesList->item(0);
         
         $agree = ($licenseNode->getAttribute('agree') != 'yes') ? 'no' : 'yes';
@@ -2069,7 +2083,7 @@ class WIFF
         $query = sprintf("/contexts/context[@name='%s']", $ctxName);
         $contextNodeList = $xpath->query($query);
         if ($contextNodeList->length <= 0) {
-            $err = sprintf(__CLASS__ . "::" . __FUNCTION__ . " " . "Could not find context '%s' in '%s'.", $ctxName, $this->xcontexts_filepath);
+            $err = sprintf(__CLASS__ . "::" . __FUNCTION__ . " " . "Could not find context '%s' in '%s'.", $ctxName, $this->contexts_filepath);
             $this->errorMessage = $err;
             $this->unlock($lock);
             return false;
@@ -2116,6 +2130,10 @@ class WIFF
             }
         } else {
             // Update the existing license.
+            
+            /**
+             * @var DOMElement $licenseNode
+             */
             $licenseNode = $licenseNodeList->item(0);
             $licenseNode->setAttribute('agree', $agree);
         }
@@ -2199,7 +2217,7 @@ class WIFF
             $this->errorMessage = sprintf("The following errors occured : '%s'", $context->errorMessage);
             return $err;
         }
-        return;
+        return null;
     }
     
     public function fmtSystemMsg($m)
@@ -2279,7 +2297,7 @@ class WIFF
     /**
      * Retrieve registration information.
      *
-     * @return boolean false on error or array() $info on success
+     * @return array|boolean false on error or array() $info on success
      *
      *   array(
      *     'mid' => $mid || '',
@@ -2309,6 +2327,9 @@ class WIFF
         
         $registrationNodeList = $xPath->query('/wiff/registration');
         if ($registrationNodeList->length > 0) {
+            /**
+             * @var DOMElement $registrationNode
+             */
             $registrationNode = $registrationNodeList->item(0);
             foreach (array_keys($info) as $key) {
                 $info[$key] = $registrationNode->getAttribute($key);

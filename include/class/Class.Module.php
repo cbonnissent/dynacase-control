@@ -72,6 +72,10 @@ class Module
      */
     public $hasDisplayableParameter = false;
     /**
+     * @var string Name of module wich replace this one
+     */
+    public $replacedBy = "";
+    /**
      * @var string last error message
      */
     public $errorMessage = '';

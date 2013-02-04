@@ -110,6 +110,7 @@ class WiffLibSystem
         }
         $cmd = array_shift($args);
         pcntl_exec($cmd, $args, $envs);
+        return 0;
     }
     
     static function getAbsolutePath($path)

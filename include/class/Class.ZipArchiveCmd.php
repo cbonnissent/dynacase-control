@@ -3,7 +3,7 @@
  * @author Anakeen
  * @license http://www.fsf.org/licensing/licenses/agpl-3.0.html GNU Affero General Public License
  * @package FDL
- */
+*/
 /**
  * ZipArchiveCmd Class
  * @author Anakeen
@@ -264,7 +264,7 @@ class ZipArchiveCmd
      *     [...]
      *   );
      *
-     * @return boolean false on error or an array-of-array as decribed above
+     * @return array|boolean false on error or an array-of-array as decribed above
      */
     public function getIndex()
     {

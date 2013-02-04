@@ -3,7 +3,7 @@
  * @author Anakeen
  * @license http://www.fsf.org/licensing/licenses/agpl-3.0.html GNU Affero General Public License
  * @package FDL
- */
+*/
 /**
  * Repository Class
  * @author Anakeen
@@ -28,7 +28,9 @@ class Repository
     public $login;
     public $password;
     public $default;
-    
+    /**
+     * @var Context
+     */
     private $context;
     
     private $contenturl;
@@ -40,8 +42,9 @@ class Repository
     
     public $isValid;
     public $needAuth;
+    public $contexts_filepath;
     
-    public function __construct($xml, $context = null, $opts = array())
+    public function __construct(DOMElement $xml, $context = null, $opts = array())
     {
         $this->use = $xml->getAttribute('use');
         
@@ -67,7 +70,9 @@ class Repository
                 $this->errorMessage = "More than one repository with name " . $this->use . ".";
                 return false;
             }
-            
+            /**
+             * @var DOMElement $repository
+             */
             $repository = $wiffRepoList->item(0);
             
             $this->name = $repository->getAttribute('name');
@@ -132,13 +137,16 @@ class Repository
         if (array_key_exists('checkValidity', $opts) && $opts['checkValidity'] === true) {
             $this->isValid();
         }
-        //        $this->needAuth();
-        
+        return $this;
     }
     
-    public function __set($property, $value)
+    public function getContext()
     {
-        $this->$property = $value;
+        return $this->context;
+    }
+    public function setContext(Context & $context)
+    {
+        $this->context = $context;
     }
     
     public function authentify($login, $password)
@@ -218,9 +226,10 @@ class Repository
     }
     /**
      * Get Module list (available modules on repository)
+     * @param Context $context
      * @return array of object Module
      */
-    public function getModuleList($context = null)
+    public function getModuleList(Context $context = null)
     {
         require_once ('class/Class.WIFF.php');
         require_once ('class/Class.Module.php');

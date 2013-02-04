@@ -133,8 +133,6 @@ function wcontrol_process(Process $process)
     
     require_once ('lib/Lib.System.php');
     
-    $wiff = WIFF::getInstance();
-    
     $cmd = $process->getAttribute('command');
     if ($cmd == '') {
         return array(

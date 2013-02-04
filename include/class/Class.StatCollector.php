@@ -16,6 +16,9 @@ class StatCollector
      * @var DomDocument $dom
      */
     private $dom = null;
+    /**
+     * @var DOMElement
+     */
     private $stats = null;
     /**
      * @var WIFF $wiff
@@ -57,7 +60,7 @@ class StatCollector
     /**
      * Collect statistics/informations on the context and the system
      *
-     * @return the current object ($this)
+     * @return StatCollector the current object ($this)
      */
     public function collect()
     {
@@ -85,7 +88,7 @@ class StatCollector
     /**
      * Get the statistics as a XML string serialization.
      *
-     * @return string containing a XML <stat></stat> document
+     * @return DOMDOcument containing a XML <stat></stat> document
      */
     public function getXML()
     {
@@ -140,7 +143,7 @@ class StatCollector
     /**
      * Collect wiff statistics (version)
      *
-     * @return the current object ($this)
+     * @return StatCollector the current object ($this)
      */
     private function _collect_wiffVersion()
     {
@@ -154,7 +157,7 @@ class StatCollector
     /**
      * Collect context statistics (name)
      *
-     * @return the current object ($this)
+     * @return StatCollector the current object ($this)
      */
     private function _collect_contextName()
     {
@@ -169,7 +172,7 @@ class StatCollector
     /**
      * Collect context modules (modules name, version, release, etc.)
      *
-     * @return the current object ($this)
+     * @return StatCollector the current object ($this)
      */
     private function _collect_contextModuleList()
     {
@@ -197,7 +200,7 @@ class StatCollector
     /**
      * Collect PHP statistics (version)
      *
-     * @return the current object ($this)
+     * @return StatCollector the current object ($this)
      */
     private function _collect_contextPHP()
     {
@@ -241,7 +244,7 @@ class StatCollector
     /**
      * Collect system statistics (uname, memory, processors, etc.)
      *
-     * @return the current object ($this)
+     * @return StatCollector the current object ($this)
      */
     private function _collect_contextSystem()
     {
@@ -315,7 +318,7 @@ class StatCollector
      * Get a machine ID (which should be persistent and identify the machine
      * on which Control is running).
      *
-     * @return string|false the ID string or boolean false in case of error
+     * @return string|bool the ID string or boolean false in case of error
      */
     public function getMachineId()
     {
@@ -335,7 +338,7 @@ class StatCollector
     /**
      * Get a machine ID for Linux systems.
      *
-     * @return string|false the ID string or boolean false in case of error
+     * @return string|bool the ID string or boolean false in case of error
      */
     public function getMachineId_Linux()
     {
@@ -357,7 +360,7 @@ class StatCollector
     /**
      * Get a machine ID for Darwin (Mac OS X) systems
      *
-     * @return string|false the ID string or boolean false in case of error
+     * @return string|bool the ID string or boolean false in case of error
      */
     public function getMachineId_Darwin()
     {
@@ -378,7 +381,7 @@ class StatCollector
      * It returns the MAC address of eth0 (if present), or the MAC address of
      * the first ethernet interface.
      *
-     * @return string|false the MAC addr string or boolean false in case of error
+     * @return string|bool the MAC addr string or boolean false in case of error
      */
     public function getMachineMacAddr_Linux()
     {
@@ -397,7 +400,7 @@ class StatCollector
      * Get the "main" MAC address of a Linux system using the `ip' command
      * from `iproute2'.
      *
-     * @return string|false the MAC addr string or boolean false in case of error
+     * @return string|bool the MAC addr string or boolean false in case of error
      */
     public function getMachineMacAddr_Linux_iproute2()
     {
@@ -444,7 +447,7 @@ class StatCollector
      * Get the "main" MAC address of a Linux system using the `ifconfig' command
      * from `net-tools'.
      *
-     * @return string|false the MAC addr string or boolean false in case of error
+     * @return string|bool the MAC addr string or boolean false in case of error
      */
     public function getMachineMacAddr_Linux_ifconfig()
     {
@@ -485,7 +488,7 @@ class StatCollector
     /**
      * Get the number of CPUs of a Linux system.
      *
-     * @return int|false the number of CPUs or boolean false in case of error
+     * @return int|bool the number of CPUs or boolean false in case of error
      */
     public function getMachineCPUCount_Linux()
     {
@@ -521,7 +524,7 @@ class StatCollector
      *
      * It returns the MAC address of the en0 interface.
      *
-     * @return string|false the MAC addr string or boolean false in case of error
+     * @return string|bool the MAC addr string or boolean false in case of error
      */
     public function getMachineMacAddr_Darwin()
     {
@@ -558,7 +561,7 @@ class StatCollector
     /**
      * Get the number of CPUs of a Darwin system.
      *
-     * @return int|false the number of CPUs or boolean false in case of error
+     * @return int|bool the number of CPUs or boolean false in case of error
      */
     public function getMachineCPUCount_Darwin()
     {

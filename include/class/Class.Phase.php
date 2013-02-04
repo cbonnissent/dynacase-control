@@ -12,17 +12,21 @@
 
 class Phase
 {
-    
+    /**
+     * @var DOMElement
+     */
     public $xmlNode;
     public $name;
-    
+    /**
+     * @var Module
+     */
     public $module;
     /**
      * @param string $phaseName the name of the phase
-     * @param XMLNode $xmlNode XMLNode object
+     * @param DOMElement $xmlNode XMLNode object
      * @param Module $module object Module
      */
-    public function __construct($phaseName, $xmlNode, $module)
+    public function __construct($phaseName, DOMElement $xmlNode, Module $module)
     {
         $this->name = $phaseName;
         $this->xmlNode = $xmlNode;
@@ -72,6 +76,9 @@ class Phase
         $processes = $phaseNode->childNodes;
         foreach ($processes as $process) {
             if (!($process instanceof DomComment)) {
+                /**
+                 * @var DOMElement $process
+                 */
                 $xmlStr = $process->ownerDocument->saveXML($process);
                 
                 $xmlStr = ltrim($xmlStr); // @TODO While making this loop, there are occurencies of $xmlStr composed of spaces only. Check why. The ltrim correct this but should not by required.
@@ -90,29 +97,6 @@ class Phase
      */
     public function getProcess($rank)
     {
-        //        if (!in_array($this->name, array (
-        //        'pre-install', 'pre-upgrade', 'pre-remove',
-        //        'unpack', 'remove', 'param',
-        //        'register-xml', 'unregister-xml',
-        //        'post-install', 'post-upgrade', 'post-remove', 'post-param'
-        //        )
-        //        ))
-        //        {
-        //            return false;
-        //        }
-        //
-        //        $phaseNodeList = $this->xmlNode->getElementsByTagName($this->name);
-        //        if ($phaseNodeList->length <= 0)
-        //        {
-        //            return $plist;
-        //        }
-        //        $phaseNode = $phaseNodeList->item(0);
-        //
-        //        $process = $phaseNode->childNodes->item($rank);
-        //        if ($process === null)
-        //        {
-        //            return false;
-        //        }
         $processList = $this->getProcessList();
         
         return $processList[$rank];

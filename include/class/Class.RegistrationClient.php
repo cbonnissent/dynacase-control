@@ -3,7 +3,7 @@
  * @author Anakeen
  * @license http://www.fsf.org/licensing/licenses/agpl-3.0.html GNU Affero General Public License
  * @package FDL
- */
+*/
 /**
  * RegistrationClient Class
  * @author Anakeen
@@ -57,7 +57,7 @@ class RegistrationClient
      * @param string $user username for HTTP Basic proxy auth (default=null)
      * @param string $pass password for HTTP Basic proxy auth (default=null)
      *
-     * @return the current object ($this)
+     * @return RegistrationClient the current object ($this)
      */
     public function setProxy($host, $port, $user = null, $pass = null)
     {
@@ -72,7 +72,7 @@ class RegistrationClient
      *
      * @param int $timeout timeout in seconds
      *
-     * @return the current object ($this)
+     * @return RegistrationClient the current object ($this)
      */
     public function setTimeout($timeout = 60)
     {
