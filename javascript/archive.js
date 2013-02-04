@@ -24,14 +24,13 @@ function updateArchiveList(select) {
 					updateArchiveList_failure(responseObject);
 				}
 			});
-
 }
 
-function reloadArchiveStore() {
+/*function reloadArchiveStore() {
 	if (archiveStore[currentArchive] && archiveStore[currentArchive].getCount() > 0) {
 		archiveStore[currentArchive].load();
 	}
-}
+}*/
 
 function updateArchiveList_success(responseObject, select) {
 
@@ -64,11 +63,12 @@ function updateArchiveList_success(responseObject, select) {
                 tabTip : '('+(data[i].datetime?data[i].datetime.substr(0, 16):'')+') '+(data[i].description?data[i].description:''),
 				style : 'padding:10px;',
 				layout : 'fit',
+                archive: data[i],
 				disabled : data[i].inProgress,
 				listeners : {
 					activate : function(panel) {
-						currentArchive = panel.title;
-						reloadArchiveStore();
+						currentArchive = panel.archive.id;
+						//reloadArchiveStore(); Must only reload when using a url or proxy for data, here the data are stored directly at the panel's creation
 					}
 				},
 				items : [{
@@ -78,7 +78,7 @@ function updateArchiveList_success(responseObject, select) {
 					iconCls : (!data[i].inProgress)
 							? (hasError ? 'x-icon-archive-error': 'x-icon-archive')
 							: 'x-icon-loading',
-					id : 'archive-' + data[i].name,
+					id : 'archive-' + data[i].id,
 					bodyStyle : 'overflow-y:auto;',
 					items : [{
 						layout : 'anchor',
@@ -480,7 +480,7 @@ function updateArchiveList_success(responseObject, select) {
 						}
 
 					}, {
-						id : 'archive-' + data[i].name + '-installed',
+						id : 'archive-' + data[i].id + '-installed',
 						title : 'Installed',
 						columnWidth : .45,
 						layout : 'fit',
@@ -490,7 +490,6 @@ function updateArchiveList_success(responseObject, select) {
 							afterrender : function(panel) {
 
 								currentArchive = panel.archive.id;
-
                                     archiveStore[currentArchive] = new Ext.data.JsonStore(
                                         {
                                             data : panel.archive.moduleList,
@@ -538,9 +537,7 @@ function updateArchiveList_success(responseObject, select) {
 								};
 
 								grid.getView().emptyText = 'No installed modules';
-
 								panel.add(grid);
-
 							}
 						}
 					}]
@@ -551,26 +548,29 @@ function updateArchiveList_success(responseObject, select) {
 
 		// Selection of context to display
 		if (data.length != 0) {
+            var archiveArray = Ext.getCmp('archive-list').items.items;
 			if (select == 'select-last') {
 				Ext.getCmp('archive-list').setActiveTab(Ext
 						.getCmp('archive-list').items.last());
-			} else {
-				if (window.currentContext) {
+			} else if (select) {
+                for (i = 0; i < archiveArray.length; i++) {
+                    if (archiveArray[i].archive && archiveArray[i].archive[select]) {
+                        Ext.getCmp('archive-list')
+                            .setActiveTab(archiveArray[i]);
+                        break;
+                    }
+                }
+            } else if (window.currentArchive) {
+                for (i = 0; i < archiveArray.length; i++) {
+                    if (archiveArray[i].archive && archiveArray[i].archive.id == currentArchive) {
+                        Ext.getCmp('archive-list')
+                            .setActiveTab(archiveArray[i]);
+                        break;
+                    }
+                }
 
-					var contextArray = Ext.getCmp('archive-list').items.items;
-
-					for (var i = 0; i < contextArray.length; i++) {
-						if (contextArray[i].title == currentContext) {
-							Ext.getCmp('archive-list')
-									.setActiveTab(contextArray[i]);
-						}
-					}
-
-				}
-
-			}
-		}
-
+            }
+        }
 }
 
 function archive_success(responseObject) {
@@ -599,7 +599,7 @@ function deleteArchive_success(responseObject) {
 		Ext.Msg.alert('Server Error', response.error);
 	} else {
 		Ext.Msg.alert('Dynacase Control', 'Archive deleted.', function() {
-					updateArchiveList();
+					updateArchiveList('select-last');
 				});
 	}
 

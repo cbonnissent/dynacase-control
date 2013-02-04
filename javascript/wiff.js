@@ -2222,7 +2222,8 @@ function updateContextList_success(responseObject, select) {
 																			'Context successfully archived',
 																			function() {
 																				(function() {
-																					updateArchiveList();
+                                                                                    window.currentArchive = action.result.data;
+                                                                                    updateArchiveList();
 																				})
 																						.defer(100);
 																			});
@@ -2282,7 +2283,7 @@ function updateContextList_success(responseObject, select) {
 
 											win.hide();
 									(function() {
-												updateArchiveList();
+												updateArchiveList('inProgress');
 											}).defer(1000);
 										}
 									}, {
@@ -4475,7 +4476,7 @@ function displayInterface() {
 									var response = eval('(' + responseObject.responseText + ')');
 									var html;
 									if (response.error) {
-										return Ext.Msg.alert('Error: could not get WIFF version', response.error);
+										return Ext.Msg.alert('Error: could not get WIFF version: ', response.error);
 									}
 									var currentVersion = response.data['version'].match(/^(\d+\.\d+)/) ? RegExp.$1 : '';
 									if( currentVersion != '' ) {
